@@ -46,7 +46,7 @@ pip install git+https://github.com/JackieHanLab/TOSICA.git
 TOSICA.train(ref_adata, gmt_path=<default mask or path to .gmt files>,label_name=<label_key>)
 ```
 
-where `<batch_key>` is the name of the label column in `ref_adata.obs`.
+where `ref_adata` is an `AnnData` object of reference dataset and `<label_key>` is the name of the label column in `ref_adata.obs`.
 
 #### Pre-prepared mask:
 
@@ -71,7 +71,7 @@ where `<batch_key>` is the name of the label column in `ref_adata.obs`.
 new_adata = TOSICA.pre(query_adata, model_weight_path = <path to optional weight>)
 ```
 
-where `model_weight_path` is the weights generated during `scTrans.train`, like: `'./weights20220607/model-6.pth'`.
+where `query_adata` is an `AnnData` object of query dataset and `model_weight_path` is the weights generated during `scTrans.train`, like: `'./weights20220607/model-6.pth'`.
 
 #### Output:
 
