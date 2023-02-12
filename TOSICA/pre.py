@@ -79,6 +79,7 @@ def prediect(adata,model_weight_path,mask_path = mask_path,laten=False,save_att 
     att = np.c_[att, predict_class,pre_class]
     all_line = adata.shape[0]
     n_line = 0
+    adata_list = []
     while (n_line) <= all_line:
         if (all_line-n_line)%batch_size != 1:
             expdata = pd.DataFrame(todense(adata[n_line:n_line+min(n_step,(all_line-n_line))]),index=np.array(adata[n_line:n_line+min(n_step,(all_line-n_line))].obs_names).tolist(), columns=np.array(adata.var_names).tolist())
@@ -96,7 +97,6 @@ def prediect(adata,model_weight_path,mask_path = mask_path,laten=False,save_att 
                                                  pin_memory=True)
         with torch.no_grad():
             # predict class
-            adata_list = []
             for step, data in enumerate(data_loader):
                 #print(step)
                 exp = data
