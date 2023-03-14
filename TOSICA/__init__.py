@@ -18,7 +18,7 @@ __version__ = version(name)
 
 mask_path = os.getcwd()+'/mask.npy'
 
-def train(adata, gmt_path, pre_weights='', label_name='Celltype',max_g=300,max_gs=300,mask_ratio =0.015, n_unannotated = 1,batch_size=8, embed_dim=48,depth=2,num_heads=4,lr=0.001, epochs= 10, lrf=0.01):
+def train(adata, gmt_path, pre_weights='', label_name='Celltype',max_g=300,max_gs=300,mask_ratio =0.015, n_unannotated = 1,batch_size=8, embed_dim=48,depth=2,num_heads=4,lr=0.001, epochs= 10, lrf=0.01, outdir=None):
     r"""
     Fit the model with reference data
     Parameters
@@ -53,6 +53,8 @@ def train(adata, gmt_path, pre_weights='', label_name='Celltype',max_g=300,max_g
         The number of epoch will be trained.
     lrf
         The hyper-parameter of Cosine Annealing.
+    outdir
+        Path in which to save results (defaults to working directory)
     Returns
     -------
     ./mask.npy
@@ -64,9 +66,9 @@ def train(adata, gmt_path, pre_weights='', label_name='Celltype',max_g=300,max_g
     ./weights20220603/
         Weights
     """
-    fit_model(adata, gmt_path, pre_weights=pre_weights, label_name=label_name,
+    return fit_model(adata, gmt_path, pre_weights=pre_weights, label_name=label_name,
               max_g=max_g,max_gs=max_gs,mask_ratio=mask_ratio, n_unannotated = n_unannotated,batch_size=batch_size, 
-              embed_dim=embed_dim,depth=depth,num_heads=num_heads,lr=lr, epochs= epochs, lrf=lrf)
+              embed_dim=embed_dim,depth=depth,num_heads=num_heads,lr=lr, epochs= epochs, lrf=lrf, outdir=outdir)
 
 
 def pre(adata,model_weight_path,mask_path = mask_path,laten=False,save_att = 'X_att', save_lantent = 'X_lat',n_step=10000,cutoff=0.1,n_unannotated = 1,batch_size=50,embed_dim=48,depth=2,num_heads=4):
