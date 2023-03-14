@@ -215,14 +215,20 @@ def evaluate(model, data_loader, device, epoch):
                                                                                accu_num.item() / sample_num)
     return accu_loss.item() / (step + 1), accu_num.item() / sample_num
 
-def fit_model(adata, gmt_path, pre_weights='', label_name='Celltype',max_g=300,max_gs=300, mask_ratio = 0.015,n_unannotated = 1,batch_size=8, embed_dim=48,depth=2,num_heads=4,lr=0.001, epochs= 10, lrf=0.01):
+def fit_model(adata, gmt_path, pre_weights='', label_name='Celltype',max_g=300,max_gs=300, mask_ratio = 0.015,n_unannotated = 1,batch_size=8, embed_dim=48,depth=2,num_heads=4,lr=0.001, epochs= 10, lrf=0.01, outdir=None):
+    if outdir is None:
+        outdir = os.getcwd()
+    mask_filename = os.path.join(outdir, 'mask.npy')
+    pathway_filename = os.path.join(outdir, 'pathway.csv')
+    dictionary_filename = os.path.join(outdir, 'label_dictionary.csv')
+    today = time.strftime('%Y%m%d',time.localtime(time.time()))
+    train_weights = os.path.join(outdir, "weights%s"%today)
+    
     GLOBAL_SEED = 1
     set_seed(GLOBAL_SEED)
     device = 'cuda:0'
     device = torch.device(device if torch.cuda.is_available() else "cpu")
     print(device)
-    today = time.strftime('%Y%m%d',time.localtime(time.time()))
-    train_weights = os.getcwd()+"/weights%s"%today
     if os.path.exists(train_weights) is False:
         os.makedirs(train_weights)
     tb_writer = SummaryWriter()
@@ -251,9 +257,9 @@ def fit_model(adata, gmt_path, pre_weights='', label_name='Celltype',max_g=300,m
         mask = mask[:,sorted(np.argsort(np.sum(mask,axis=0))[-min(max_gs,mask.shape[1]):])]
         #print(mask.shape)
         print('Mask loaded!')
-    np.save(os.getcwd()+'/mask.npy',mask)
-    pd.DataFrame(pathway).to_csv(os.getcwd()+'/pathway.csv') 
-    pd.DataFrame(inverse,columns=[label_name]).to_csv(os.getcwd()+'/label_dictionary.csv', quoting=None)
+    np.save(mask_filename,mask)
+    pd.DataFrame(pathway).to_csv(pathway_filename) 
+    pd.DataFrame(inverse,columns=[label_name]).to_csv(dictionary_filename, quoting=None)
     num_classes = np.int64(torch.max(label_train)+1)
     #print(num_classes)
     train_dataset = MyDataSet(exp_train, label_train)
@@ -301,6 +307,7 @@ def fit_model(adata, gmt_path, pre_weights='', label_name='Celltype',max_g=300,m
         else:
             torch.save(model.state_dict(), "/%s"%train_weights+"/model-{}.pth".format(epoch))
     print('Training finished!')
+    return mask_filename, pathway_filename, dictionary_filename, train_weights
 
 #train(adata, gmt_path, pre_weights, batch_size=8, epochs=20)
 
