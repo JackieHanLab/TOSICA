@@ -43,13 +43,14 @@ pip install git+https://github.com/JackieHanLab/TOSICA.git
 ### Step 1: Training the model
 
 ```py
-TOSICA.train(ref_adata, gmt_path,label_name=<label_key>)
+TOSICA.train(ref_adata, gmt_path,project=<my_project>,label_name=<label_key>)
 ```
 
 #### Input:
 
 + `ref_adata`: an `AnnData` object of reference dataset.
 + `gmt_path` : default pre-prepared mask or path to .gmt files.
++ `<my_project>`: the model will be saved in a folder named <my_project>. Default: `<gmt_path>_20xxxxxx`.
 + `<label_key>`: the name of the label column in `ref_adata.obs`.
 
 #### Pre-prepared mask:
@@ -64,21 +65,22 @@ TOSICA.train(ref_adata, gmt_path,label_name=<label_key>)
 
 #### Output:
 
-+ `./mask.npy` : Mask matrix
-+ `./pathway.csv` : Gene set list
-+ `./label_dictionary.csv` : Label list
-+ `./weights20220603/` : Weights
++ `./my_project/mask.npy` : Mask matrix
++ `./my_project/pathway.csv` : Gene set list
++ `./my_project/label_dictionary.csv` : Label list
++ `./my_project/model-n.pth` : Weights
 
 ### Step 2: Prediect by the model
 
 ```py
-new_adata = TOSICA.pre(query_adata, model_weight_path = <path to optional weight>)
+new_adata = TOSICA.pre(query_adata, model_weight_path = <path to optional weight>,project=<my_project>)
 ```
 
 #### Input:
 
 + `query_adata`: an `AnnData` object of query dataset .
 + `model_weight_path`: the weights generated during `scTrans.train`, like: `'./weights20220607/model-6.pth'`.
++ `project`: name of the folder build in training step, like: `my_project` or `<gmt_path>_20xxxxxx`.
 
 #### Output:
 
@@ -86,7 +88,7 @@ new_adata = TOSICA.pre(query_adata, model_weight_path = <path to optional weight
 + `new_adata.obs['Prediction']` : Predicted labels
 + `new_adata.obs['Probability']` : Probability of the prediction
 + `new_adata.var['pathway_index']` : Gene set of each colume
-+ `./gene2token_weights.csv` : The weights matrix of genes to tokens
++ `./my_project/gene2token_weights.csv` : The weights matrix of genes to tokens
 
 > **Warning:** the `var_names` (genes) of the `ref_adata` and `query_adata` must be consistent and in the same order.
 > ```
