@@ -9,7 +9,7 @@ import anndata as ad
 from .TOSICA_model import scTrans_model as create_model
 
 #model_weight_path = "./weights20220429/model-5.pth" 
-mask_path = os.getcwd()+'/mask.npy'
+#mask_path = os.getcwd()+'/mask.npy'
 
 def todense(adata):
     import scipy
@@ -41,13 +41,14 @@ def get_weight(att_mat,pathway):
     v.columns = pathway
     return v
 
-def prediect(adata,model_weight_path,mask_path = mask_path,laten=False,save_att = 'X_att', save_lantent = 'X_lat',n_step=10000,cutoff=0.1,n_unannotated = 1,batch_size = 50,embed_dim=48,depth=2,num_heads=4):
+def prediect(adata,model_weight_path,project,mask_path = mask_path,laten=False,save_att = 'X_att', save_lantent = 'X_lat',n_step=10000,cutoff=0.1,n_unannotated = 1,batch_size = 50,embed_dim=48,depth=2,num_heads=4):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(device)
     num_genes = adata.shape[1]
-    mask = np.load(mask_path) 
-    pathway = pd.read_csv(os.getcwd()+'/pathway.csv', index_col=0)
-    dictionary = pd.read_table(os.getcwd()+'/label_dictionary.csv', sep=',',header=0,index_col=0)
+    mask = np.load(mask_path)
+    project_path = os.getcwd()+project
+    pathway = pd.read_csv(project_path+'/pathway.csv', index_col=0)
+    dictionary = pd.read_table(project_path+'/label_dictionary.csv', sep=',',header=0,index_col=0)
     n_c = len(dictionary)
     label_name = dictionary.columns[0]
     dictionary.loc[(dictionary.shape[0])] = 'Unknown'
@@ -69,7 +70,7 @@ def prediect(adata,model_weight_path,mask_path = mask_path,laten=False,save_att 
     gene2token = pd.DataFrame(gene2token)
     gene2token.columns=adata.var_names
     gene2token.index = pathway['0']
-    gene2token.to_csv('gene2token_weights.csv')
+    gene2token.to_csv(project_path+'gene2token_weights.csv')
     latent = torch.empty([0,embed_dim]).cpu()
     att = torch.empty([0,(len(pathway))]).cpu()
     predict_class = np.empty(shape=0)
