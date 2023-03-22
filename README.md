@@ -100,3 +100,7 @@ new_adata = TOSICA.pre(query_adata, model_weight_path = <path to optional weight
 ### Example Demo:
 
 [Guided Tutorial](test/tutorial.ipynb)
+
+### Cite TOSICA:
+
+[Chen, J., Xu, H., Tao, W. et al. Transformer for one stop interpretable cell type annotation. Nat Commun 14, 223 (2023).](https://doi.org/10.1038/s41467-023-35923-4)
