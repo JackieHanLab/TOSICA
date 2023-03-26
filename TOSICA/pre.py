@@ -41,10 +41,11 @@ def get_weight(att_mat,pathway):
     v.columns = pathway
     return v
 
-def prediect(adata,model_weight_path,project,mask_path = mask_path,laten=False,save_att = 'X_att', save_lantent = 'X_lat',n_step=10000,cutoff=0.1,n_unannotated = 1,batch_size = 50,embed_dim=48,depth=2,num_heads=4):
+def prediect(adata,model_weight_path,project,mask_path,laten=False,save_att = 'X_att', save_lantent = 'X_lat',n_step=10000,cutoff=0.1,n_unannotated = 1,batch_size = 50,embed_dim=48,depth=2,num_heads=4):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print(device)
     num_genes = adata.shape[1]
+    #mask_path = os.getcwd()+project+'/mask.npy'
     mask = np.load(mask_path)
     project_path = os.getcwd()+project
     pathway = pd.read_csv(project_path+'/pathway.csv', index_col=0)
