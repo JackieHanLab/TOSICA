@@ -113,7 +113,7 @@ def pre(adata,model_weight_path,project,laten=False,save_att = 'X_att', save_lan
         adata.obs['Probability'] : Probability of the prediction
         adata.var['pathway_index'] : Gene set of each colume
     """
-    mask_path = os.getcwd()+project+'/mask.npy'
+    mask_path = os.getcwd()+'/%s'%project+'/mask.npy'
     adata = prediect(adata,model_weight_path,project=project,mask_path = mask_path,laten=laten,
              save_att = save_att, save_lantent = save_lantent,n_step=n_step,cutoff=cutoff,n_unannotated = n_unannotated,batch_size=batch_size,embed_dim=embed_dim,depth=depth,num_heads=num_heads)
     return(adata)
