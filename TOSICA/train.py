@@ -224,7 +224,7 @@ def fit_model(adata, gmt_path, project = None, pre_weights='', label_name='Cellt
     today = time.strftime('%Y%m%d',time.localtime(time.time()))
     #train_weights = os.getcwd()+"/weights%s"%today
     project = project or gmt_path.replace('.gmt','')+'_%s'%today
-    project_path = os.getcwd()+project
+    project_path = os.getcwd()+'/%s'%project
     if os.path.exists(project_path) is False:
         os.makedirs(project_path)
     tb_writer = SummaryWriter()
