@@ -47,7 +47,7 @@ def prediect(adata,model_weight_path,project,mask_path,laten=False,save_att = 'X
     num_genes = adata.shape[1]
     #mask_path = os.getcwd()+project+'/mask.npy'
     mask = np.load(mask_path)
-    project_path = os.getcwd()+project
+    project_path = os.getcwd()+'/%s'project
     pathway = pd.read_csv(project_path+'/pathway.csv', index_col=0)
     dictionary = pd.read_table(project_path+'/label_dictionary.csv', sep=',',header=0,index_col=0)
     n_c = len(dictionary)
@@ -71,7 +71,7 @@ def prediect(adata,model_weight_path,project,mask_path,laten=False,save_att = 'X
     gene2token = pd.DataFrame(gene2token)
     gene2token.columns=adata.var_names
     gene2token.index = pathway['0']
-    gene2token.to_csv(project_path+'gene2token_weights.csv')
+    gene2token.to_csv(project_path+'/gene2token_weights.csv')
     latent = torch.empty([0,embed_dim]).cpu()
     att = torch.empty([0,(len(pathway))]).cpu()
     predict_class = np.empty(shape=0)
