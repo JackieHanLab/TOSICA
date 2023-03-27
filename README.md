@@ -8,7 +8,7 @@ We created the python package called `TOSICA` that uses `scanpy` ans `torch` to 
 
 ### Requirements
 
-+ Linux or UNIX system
++ Linux/UNIX/Windows system
 + Python >= 3.8
 + torch >= 1.7.1
 
