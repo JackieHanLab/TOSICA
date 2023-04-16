@@ -261,7 +261,7 @@ def fit_model(
         else:
             gmt_path = get_gmt(gmt_path)
         reactome_dict = read_gmt(gmt_path, min_g=0, max_g=max_g)
-        mask,pathway = create_pathway_mask(feature_list=genes,
+        mask, pathway = create_pathway_mask(feature_list=genes,
                                           dict_pathway=reactome_dict,
                                           add_missing=n_unannotated,
                                           fully_connected=True)

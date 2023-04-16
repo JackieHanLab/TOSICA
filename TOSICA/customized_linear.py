@@ -8,6 +8,7 @@ This code base on https://pytorch.org/docs/stable/notes/extending.html
 import math
 import torch
 import torch.nn as nn
+from utils.log_util import logger
 
 
 class CustomizedLinearFunction(torch.autograd.Function):
@@ -76,7 +77,6 @@ class CustomizedLinear(nn.Module):
             self.mask = mask.type(torch.float).t()
         else:
             self.mask = torch.tensor(mask, dtype=torch.float).t()
-
         self.mask = nn.Parameter(self.mask, requires_grad=False)
 
         # nn.Parameter is a special kind of Tensor, that will get
@@ -124,10 +124,7 @@ class CustomizedLinear(nn.Module):
         )
 
 
-
-
-
-if __name__ == 'check grad':
+if __name__ == '__main__':
     from torch.autograd import gradcheck
 
     # gradcheck takes a tuple of tensors as input, check if your gradient
@@ -137,7 +134,7 @@ if __name__ == 'check grad':
     customlinear = CustomizedLinearFunction.apply
 
     input = (
-            torch.randn(20,20,dtype=torch.double,requires_grad=True),
+            torch.randn(0,20,dtype=torch.double,requires_grad=True),
             torch.randn(30,20,dtype=torch.double,requires_grad=True),
             None,
             None,

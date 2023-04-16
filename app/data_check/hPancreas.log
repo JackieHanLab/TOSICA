@@ -1,0 +1,57 @@
+04-17 07:31:05 hPancreas.py 22: Index(['COL1A1', 'COL1A2', 'PPY', 'CTRB1', 'CELA3A'], dtype='object')
+04-17 07:31:05 hPancreas.py 23: Index(['human1_lib1.final_cell_0001', 'human1_lib1.final_cell_0003',
+       'human1_lib1.final_cell_0004', 'human1_lib1.final_cell_0005',
+       'human1_lib1.final_cell_0006'],
+      dtype='object')
+04-17 07:31:05 hPancreas.py 26: View of AnnData object with n_obs × n_vars = 10600 × 3000
+    obs: 'Celltype'
+    var: 'Gene Symbol'
+04-17 07:31:05 hPancreas.py 27: alpha          3136
+beta           2966
+ductal         1290
+acinar         1144
+delta           793
+PSC             524
+PP              356
+endothelial     273
+macrophage       52
+mast             25
+epsilon          21
+schwann          13
+t_cell            7
+Name: Celltype, dtype: int64
+04-17 07:31:05 hPancreas.py 29: 
+show a short snipper of data
+04-17 07:31:05 hPancreas.py 31: View of AnnData object with n_obs × n_vars = 2 × 4
+    obs: 'Celltype'
+    var: 'Gene Symbol'
+04-17 07:31:05 hPancreas.py 33: [[0.0, 0.0, 1.0241609811782837, 5.755773067474365], [0.0, 0.0, 0.7810583114624023, 6.0262041091918945]]
+04-17 07:31:05 hPancreas.py 35: 
+query_adata
+04-17 07:31:05 hPancreas.py 38: View of AnnData object with n_obs × n_vars = 4218 × 3000
+    obs: 'Celltype'
+    var: 'Gene Symbol'
+04-17 07:31:05 hPancreas.py 39: alpha           2011
+beta            1006
+ductal           414
+PP               282
+acinar           209
+delta            188
+PSC               73
+endothelial       16
+epsilon            7
+mast               7
+MHC class II       5
+Name: Celltype, dtype: int64
+04-17 07:31:05 hPancreas.py 40: COL1A1        COL1A1
+COL1A2        COL1A2
+PPY              PPY
+CTRB1          CTRB1
+CELA3A        CELA3A
+              ...   
+FAM110D      FAM110D
+SELL            SELL
+C9orf135    C9orf135
+GRIN2D        GRIN2D
+HERC5          HERC5
+Name: Gene Symbol, Length: 3000, dtype: object

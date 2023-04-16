@@ -8,6 +8,8 @@ from einops import rearrange
 import random
 import numpy as np
 import pandas as pd
+from utils.log_util import logger
+
 
 def drop_path(x, drop_prob: float = 0., training: bool = False):
     if drop_prob == 0. or not training:
@@ -19,6 +21,7 @@ def drop_path(x, drop_prob: float = 0., training: bool = False):
     output = x.div(keep_prob) * random_tensor
     return output
 
+
 class DropPath(nn.Module):
     def __init__(self, drop_prob=None):
         super(DropPath, self).__init__()
@@ -26,21 +29,26 @@ class DropPath(nn.Module):
     def forward(self, x):
         return drop_path(x, self.drop_prob, self.training)
 
+
 class FeatureEmbed(nn.Module):
     def __init__(self, num_genes, mask, embed_dim=192, fe_bias=True, norm_layer=None):
         super().__init__()
         self.num_genes = num_genes
         self.num_patches = mask.shape[1]
         self.embed_dim = embed_dim
-        mask = np.repeat(mask,embed_dim,axis=1)
+        # input mask shape is (num_genes, max_gs=300), after repeat the shape is (num_genes, max_gs*embed_dim). 
+        # In tutorial, e.g. after np.repeat(), the mask is 3000*14400.
+        mask = np.repeat(mask, embed_dim, axis=1)
         self.mask = mask
         self.fe = CustomizedLinear(self.mask)
         self.norm = norm_layer(embed_dim) if norm_layer else nn.Identity()
+
     def forward(self, x):
-        num_cells = x.shape[0]
+        # num_cells = x.shape[0]
         x = rearrange(self.fe(x), 'h (w c) -> h c w ', c=self.num_patches)
         x = self.norm(x)
         return x
+
 
 class Attention(nn.Module):
     def __init__(self,
@@ -70,6 +78,7 @@ class Attention(nn.Module):
         x = self.proj(x)
         x = self.proj_drop(x)
         return x, weights
+
 
 class Mlp(nn.Module):
     def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.):
@@ -173,7 +182,7 @@ class Transformer(nn.Module):
         self.num_tokens = 2 if distilled else 1
         norm_layer = norm_layer or partial(nn.LayerNorm, eps=1e-6)
         act_layer = act_layer or nn.GELU
-        self.feature_embed = embed_layer(num_genes, mask = mask, embed_dim=embed_dim, fe_bias=fe_bias)
+        self.feature_embed = embed_layer(num_genes, mask=mask, embed_dim=embed_dim, fe_bias=fe_bias)
         self.cls_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
         self.dist_token = nn.Parameter(torch.zeros(1, 1, embed_dim)) if distilled else None
         dpr = [x.item() for x in torch.linspace(0, drop_path_ratio, depth)]

@@ -1,6 +1,7 @@
 /data
 *.npy
 z.*
+/z?.*
 
 ### Python ###
 # Byte-compiled / optimized / DLL files
