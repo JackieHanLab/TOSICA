@@ -44,7 +44,7 @@ class FeatureEmbed(nn.Module):
 
 class Attention(nn.Module):
     def __init__(self,
-                 dim, 
+                 dim,
                  num_heads=8,
                  qkv_bias=False,
                  qk_scale=None,
@@ -75,7 +75,7 @@ class Mlp(nn.Module):
     def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0.):
         super().__init__()
         out_features = out_features or in_features
-        hidden_features = hidden_features or in_features 
+        hidden_features = hidden_features or in_features
         self.fc1 = nn.Linear(in_features, hidden_features)
         self.act = act_layer()
         self.fc2 = nn.Linear(hidden_features, out_features)
@@ -90,12 +90,12 @@ class Mlp(nn.Module):
 
 class Block(nn.Module):
     def __init__(self,
-                 dim, 
+                 dim,
                  num_heads,
-                 mlp_ratio=4., 
+                 mlp_ratio=4.,
                  qkv_bias=False,
                  qk_scale=None,
-                 drop_ratio=0., 
+                 drop_ratio=0.,
                  attn_drop_ratio=0.,
                  drop_path_ratio=0.,
                  act_layer=nn.GELU,
@@ -131,7 +131,7 @@ def get_weight(att_mat):
     # Recursively multiply the weight matrices
     joint_attentions = torch.zeros(aug_att_mat.size()).to(device)
     joint_attentions[0] = aug_att_mat[0]
-    
+
     for n in range(1, aug_att_mat.size(0)):
         joint_attentions[n] = torch.matmul(aug_att_mat[n], joint_attentions[n-1])
 
@@ -152,16 +152,16 @@ class Transformer(nn.Module):
         """
         Args:
             num_classes (int): number of classes for classification head
-            num_genes (int): number of feature of input(expData) 
+            num_genes (int): number of feature of input(expData)
             embed_dim (int): embedding dimension
-            depth (int): depth of transformer 
+            depth (int): depth of transformer
             num_heads (int): number of attention heads
             mlp_ratio (int): ratio of mlp hidden dim to embedding dim
             qkv_bias (bool): enable bias for qkv if True
             qk_scale (float): override default qk scale of head_dim ** -0.5 if set
             representation_size (Optional[int]): enable and set representation layer (pre-logits) to this value if set
             distilled (bool): model includes a distillation token and head as in DeiT models
-            drop_ratio (float): dropout rate 
+            drop_ratio (float): dropout rate
             attn_drop_ratio (float): attention dropout rate
             drop_path_ratio (float): stochastic depth rate
             embed_layer (nn.Module): feature embed layer
@@ -214,7 +214,7 @@ class Transformer(nn.Module):
         x = self.feature_embed(x)
         cls_token = self.cls_token.expand(x.shape[0], -1, -1)
         if self.dist_token is None: #ViT中就是None
-            x = torch.cat((cls_token, x), dim=1) 
+            x = torch.cat((cls_token, x), dim=1)
         else:
             x = torch.cat((cls_token, self.dist_token.expand(x.shape[0], -1, -1), x), dim=1)
         attn_weights = []
@@ -225,20 +225,20 @@ class Transformer(nn.Module):
         x = self.norm(tem)
         attn_weights = get_weight(attn_weights)
         if self.dist_token is None:
-            return self.pre_logits(x[:, 0]),attn_weights 
+            return self.pre_logits(x[:, 0]),attn_weights
         else:
             return x[:, 0], x[:, 1],attn_weights
     def forward(self, x):
         latent, attn_weights = self.forward_features(x)
 
-        if self.head_dist is not None: 
+        if self.head_dist is not None:
             latent, latent_dist = self.head(latent[0]), self.head_dist(latent[1])
             if self.training and not torch.jit.is_scripting():
                 return latent, latent_dist
             else:
                 return (latent+latent_dist) / 2
         else:
-            pre = self.head(latent) 
+            pre = self.head(latent)
         return latent, pre, attn_weights
 
 def _init_vit_weights(m):
@@ -252,11 +252,14 @@ def _init_vit_weights(m):
             nn.init.zeros_(m.bias)
     elif isinstance(m, nn.LayerNorm):
         nn.init.zeros_(m.bias)
-        nn.init.ones_(m.weight)  
+        nn.init.ones_(m.weight)
 
-def scTrans_model(num_classes, num_genes, mask, embed_dim=48,depth=2,num_heads=4,has_logits: bool = True):
-    model = Transformer(num_classes=num_classes, 
-                        num_genes=num_genes, 
+def scTrans_model(num_classes, num_genes, mask, embed_dim=48, depth=2, num_heads=4, has_logits: bool = True):
+    """
+    TODO In tutorial, has_logits is False, that's representation_size is None
+    """
+    model = Transformer(num_classes=num_classes,
+                        num_genes=num_genes,
                         mask = mask,
                         embed_dim=embed_dim,
                         depth=depth,
@@ -264,4 +267,3 @@ def scTrans_model(num_classes, num_genes, mask, embed_dim=48,depth=2,num_heads=4
                         drop_ratio=0.5, attn_drop_ratio=0.5, drop_path_ratio=0.5,
                         representation_size=embed_dim if has_logits else None)
     return model
-
