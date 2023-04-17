@@ -184,11 +184,12 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch):
     data_loader = tqdm(data_loader)
     for step, data in enumerate(data_loader):
         exp, label = data
+        labels = labels.to(device)
         sample_num += exp.shape[0]
         _,pred,_ = model(exp.to(device))
-        pred_classes = torch.max(pred, dim=1)[1]
-        accu_num += torch.eq(pred_classes, label.to(device)).sum()
-        loss = loss_function(pred, label.to(device))
+        pred_classes = torch.argmax(pred, dim=1)
+        accu_num += torch.eq(pred_classes, label).sum()
+        loss = loss_function(pred, label)
         loss.backward()
         accu_loss += loss.detach()
         data_loader.desc = "[train epoch {}] loss: {:.3f}, acc: {:.3f}".format(epoch,
@@ -211,11 +212,12 @@ def evaluate(model, data_loader, device, epoch):
     data_loader = tqdm(data_loader)
     for step, data in enumerate(data_loader):
         exp, labels = data
+        labels = labels.to(device)
         sample_num += exp.shape[0]
         _,pred,_ = model(exp.to(device))
         pred_classes = torch.max(pred, dim=1)[1]
-        accu_num += torch.eq(pred_classes, labels.to(device)).sum()
-        loss = loss_function(pred, labels.to(device))
+        accu_num += torch.eq(pred_classes, labels).sum()
+        loss = loss_function(pred, labels)
         accu_loss += loss
         data_loader.desc = "[valid epoch {}] loss: {:.3f}, acc: {:.3f}".format(epoch,
                                                                                accu_loss.item() / (step + 1),

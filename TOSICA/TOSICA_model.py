@@ -13,10 +13,8 @@ def drop_path(x, drop_prob: float = 0., training: bool = False):
     if drop_prob == 0. or not training:
         return x
     keep_prob = 1 - drop_prob
+    # shape: (8, 1, 1)
     shape = (x.shape[0],) + (1,) * (x.ndim - 1)
-    logger.info('%s', x.ndim)
-    logger.info('%s', (1,) * (x.ndim - 1))
-    logger.info('%s', shape)
     random_tensor = keep_prob + torch.rand(shape, dtype=x.dtype, device=x.device)
     random_tensor.floor_()
     output = x.div(keep_prob) * random_tensor
@@ -27,7 +25,7 @@ class DropPath(nn.Module):
     def __init__(self, drop_prob=None):
         super(DropPath, self).__init__()
         self.drop_prob = drop_prob
-    
+
     def forward(self, x):
         return drop_path(x, self.drop_prob, self.training)
 
@@ -39,7 +37,7 @@ class FeatureEmbed(nn.Module):
         # num_patches is the max_gs, default 300, is equal to seq_length in NLP.
         self.num_patches = mask.shape[1]
         self.embed_dim = embed_dim
-        # input mask shape is (num_genes, max_gs=300), after repeat the shape is (num_genes, max_gs*embed_dim). 
+        # input mask shape is (num_genes, max_gs=300), after repeat the shape is (num_genes, max_gs*embed_dim).
         # In tutorial, e.g. after np.repeat(), the mask is 3000*14400.
         mask = np.repeat(mask, embed_dim, axis=1)
         self.mask = mask
@@ -130,7 +128,6 @@ class Block(nn.Module):
 
 def get_weight(att_mat):
     """ Returned tensor shape is batch-size, seq-len(num_patches). """
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # att_mat[0].shape: [8, 4, 301, 301], batch size 8, head num 4, seq-len(num_patches+1) 301
     # torch.stack(att_mat).shape: [2, 8, 4, 301, 301], as depth is 2.
     # the squeeze(1) is not use.
@@ -139,13 +136,13 @@ def get_weight(att_mat):
     att_mat = torch.mean(att_mat, dim=2)
     # To account for residual connections, we add an identity matrix to the
     # attention matrix and re-normalize the weights.
-    residual_att = torch.eye(att_mat.size(3))
+    residual_att = torch.eye(att_mat.size(3), device=att_mat.device)
     # auto broadcast from the last dimensions.
-    aug_att_mat = att_mat.to(device) + residual_att.to(device)
+    aug_att_mat = att_mat + residual_att
     aug_att_mat = aug_att_mat / aug_att_mat.sum(dim=-1).unsqueeze(-1)
     # Recursively multiply the weight matrices
     # aug_att_mat.shape [2, 8, 301, 301]
-    joint_attentions = torch.zeros(aug_att_mat.size()).to(device)
+    joint_attentions = torch.zeros(aug_att_mat.size(), device=att_mat.device)
     joint_attentions[0] = aug_att_mat[0]
 
     for n in range(1, aug_att_mat.size(0)):
@@ -245,7 +242,7 @@ class Transformer(nn.Module):
             return self.pre_logits(x[:, 0]), attn_weights
         else:
             return x[:, 0], x[:, 1], attn_weights
-        
+
     def forward(self, x):
         # latent shape: batch-size, embed-size; attn_weights shape: batch-s, seq-len(num_patches, that's max_gs)
         latent, attn_weights = self.forward_features(x)
