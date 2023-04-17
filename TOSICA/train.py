@@ -266,10 +266,10 @@ def fit_model(
                                           add_missing=n_unannotated,
                                           fully_connected=True)
         pathway = pathway[np.sum(mask,axis=0)>4]
-        mask = mask[:,np.sum(mask,axis=0)>4]
+        mask = mask[:, np.sum(mask,axis=0)>4]
         #logger.info(mask.shape)
-        pathway = pathway[sorted(np.argsort(np.sum(mask,axis=0))[-min(max_gs,mask.shape[1]):])]
-        mask = mask[:,sorted(np.argsort(np.sum(mask,axis=0))[-min(max_gs,mask.shape[1]):])]
+        pathway = pathway[sorted(np.argsort(np.sum(mask,axis=0))[-min(max_gs, mask.shape[1]):])]
+        mask = mask[:, sorted(np.argsort(np.sum(mask,axis=0))[-min(max_gs, mask.shape[1]):])]
         #logger.info(mask.shape)
         logger.info('Mask loaded!')
     np.save(project_path+'/mask.npy',mask)

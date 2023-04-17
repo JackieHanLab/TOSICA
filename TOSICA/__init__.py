@@ -17,7 +17,10 @@ name = "TOSICA"
 # __version__ = version(name)
 
 
-def train(adata, gmt_path, project=None,pre_weights='', label_name='Celltype',max_g=300,max_gs=300,mask_ratio =0.015, n_unannotated = 1,batch_size=8, embed_dim=48,depth=2,num_heads=4,lr=0.001, epochs= 10, lrf=0.01):
+def train(
+    adata, gmt_path, project=None, pre_weights='', label_name='Celltype',
+    max_g=300, max_gs=300, mask_ratio =0.015, n_unannotated = 1,
+    batch_size=8, embed_dim=48, depth=2, num_heads=4, lr=0.001, epochs= 10, lrf=0.01):
     r"""
     Fit the model with reference data
     Parameters

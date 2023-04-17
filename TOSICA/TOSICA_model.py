@@ -5,9 +5,7 @@ import torch.nn as nn
 import copy
 from .customized_linear import CustomizedLinear
 from einops import rearrange
-import random
 import numpy as np
-import pandas as pd
 from utils.log_util import logger
 
 
@@ -16,6 +14,9 @@ def drop_path(x, drop_prob: float = 0., training: bool = False):
         return x
     keep_prob = 1 - drop_prob
     shape = (x.shape[0],) + (1,) * (x.ndim - 1)
+    logger.info('%s', x.ndim)
+    logger.info('%s', (1,) * (x.ndim - 1))
+    logger.info('%s', shape)
     random_tensor = keep_prob + torch.rand(shape, dtype=x.dtype, device=x.device)
     random_tensor.floor_()
     output = x.div(keep_prob) * random_tensor
@@ -26,6 +27,7 @@ class DropPath(nn.Module):
     def __init__(self, drop_prob=None):
         super(DropPath, self).__init__()
         self.drop_prob = drop_prob
+    
     def forward(self, x):
         return drop_path(x, self.drop_prob, self.training)
 
@@ -34,6 +36,7 @@ class FeatureEmbed(nn.Module):
     def __init__(self, num_genes, mask, embed_dim=192, fe_bias=True, norm_layer=None):
         super().__init__()
         self.num_genes = num_genes
+        # num_patches is the max_gs, default 300, is equal to seq_length in NLP.
         self.num_patches = mask.shape[1]
         self.embed_dim = embed_dim
         # input mask shape is (num_genes, max_gs=300), after repeat the shape is (num_genes, max_gs*embed_dim). 
@@ -44,7 +47,6 @@ class FeatureEmbed(nn.Module):
         self.norm = norm_layer(embed_dim) if norm_layer else nn.Identity()
 
     def forward(self, x):
-        # num_cells = x.shape[0]
         x = rearrange(self.fe(x), 'h (w c) -> h c w ', c=self.num_patches)
         x = self.norm(x)
         return x
@@ -66,6 +68,7 @@ class Attention(nn.Module):
         self.attn_drop = nn.Dropout(attn_drop_ratio)
         self.proj = nn.Linear(dim, dim)
         self.proj_drop = nn.Dropout(proj_drop_ratio)
+
     def forward(self, x):
         B, N, C = x.shape
         qkv = self.qkv(x).reshape(B, N, 3, self.num_heads, C // self.num_heads).permute(2, 0, 3, 1, 4)
@@ -117,40 +120,43 @@ class Block(nn.Module):
         self.norm2 = norm_layer(dim)
         mlp_hidden_dim = int(dim * mlp_ratio)
         self.mlp = Mlp(in_features=dim, hidden_features=mlp_hidden_dim, act_layer=act_layer, drop=drop_ratio)
+
     def forward(self, x):
-        #x = x + self.drop_path(self.attn(self.norm1(x)))
         hhh, weights = self.attn(self.norm1(x))
         x = x + self.drop_path(hhh)
         x = x + self.drop_path(self.mlp(self.norm2(x)))
         return x, weights
 
+
 def get_weight(att_mat):
+    """ Returned tensor shape is batch-size, seq-len(num_patches). """
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    # att_mat[0].shape: [8, 4, 301, 301], batch size 8, head num 4, seq-len(num_patches+1) 301
+    # torch.stack(att_mat).shape: [2, 8, 4, 301, 301], as depth is 2.
+    # the squeeze(1) is not use.
     att_mat = torch.stack(att_mat).squeeze(1)
-    #print(att_mat.size())
-    # Average the attention weights across all heads.
+    # Average the attention weights across all heads, shape: [2, 8, 301, 301]
     att_mat = torch.mean(att_mat, dim=2)
-    #print(att_mat.size())
     # To account for residual connections, we add an identity matrix to the
     # attention matrix and re-normalize the weights.
     residual_att = torch.eye(att_mat.size(3))
+    # auto broadcast from the last dimensions.
     aug_att_mat = att_mat.to(device) + residual_att.to(device)
     aug_att_mat = aug_att_mat / aug_att_mat.sum(dim=-1).unsqueeze(-1)
-    #print(aug_att_mat.size())
     # Recursively multiply the weight matrices
+    # aug_att_mat.shape [2, 8, 301, 301]
     joint_attentions = torch.zeros(aug_att_mat.size()).to(device)
     joint_attentions[0] = aug_att_mat[0]
 
     for n in range(1, aug_att_mat.size(0)):
         joint_attentions[n] = torch.matmul(aug_att_mat[n], joint_attentions[n-1])
 
-    #print(joint_attentions.size())
     # Attention from the output token to the input space.
     v = joint_attentions[-1]
-    #print(v.size())
-    v = v[:,0,1:]
-    #print(v.size())
+    # v shape: [8, 300]
+    v = v[:, 0, 1:]
     return v
+
 
 class Transformer(nn.Module):
     def __init__(self, num_classes, num_genes, mask, fe_bias=True,
@@ -219,10 +225,12 @@ class Transformer(nn.Module):
             nn.init.trunc_normal_(self.dist_token, std=0.02)
         nn.init.trunc_normal_(self.cls_token, std=0.02)
         self.apply(_init_vit_weights)
+
     def forward_features(self, x):
         x = self.feature_embed(x)
         cls_token = self.cls_token.expand(x.shape[0], -1, -1)
-        if self.dist_token is None: #ViT中就是None
+        if self.dist_token is None:  # ViT中就是None
+            # the x shape becomes from (batch-size, num_patches, dim-size) to (batch-size, num_patches+1, dim-size)
             x = torch.cat((cls_token, x), dim=1)
         else:
             x = torch.cat((cls_token, self.dist_token.expand(x.shape[0], -1, -1), x), dim=1)
@@ -234,10 +242,12 @@ class Transformer(nn.Module):
         x = self.norm(tem)
         attn_weights = get_weight(attn_weights)
         if self.dist_token is None:
-            return self.pre_logits(x[:, 0]),attn_weights
+            return self.pre_logits(x[:, 0]), attn_weights
         else:
-            return x[:, 0], x[:, 1],attn_weights
+            return x[:, 0], x[:, 1], attn_weights
+        
     def forward(self, x):
+        # latent shape: batch-size, embed-size; attn_weights shape: batch-s, seq-len(num_patches, that's max_gs)
         latent, attn_weights = self.forward_features(x)
 
         if self.head_dist is not None:
@@ -249,6 +259,7 @@ class Transformer(nn.Module):
         else:
             pre = self.head(latent)
         return latent, pre, attn_weights
+
 
 def _init_vit_weights(m):
     """
@@ -262,6 +273,7 @@ def _init_vit_weights(m):
     elif isinstance(m, nn.LayerNorm):
         nn.init.zeros_(m.bias)
         nn.init.ones_(m.weight)
+
 
 def scTrans_model(num_classes, num_genes, mask, embed_dim=48, depth=2, num_heads=4, has_logits: bool = True):
     """
