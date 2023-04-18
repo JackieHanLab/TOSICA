@@ -128,7 +128,7 @@ class Block(nn.Module):
 
 def get_weight(att_mat):
     """ Returned tensor shape is batch-size, seq-len(num_patches). """
-    # att_mat[0].shape: [8, 4, 301, 301], batch size 8, head num 4, seq-len(num_patches+1) 301
+    # att_mat[0].shape: [8, 4, 301, 301], [batch size, head num, seq-len(num_patches+1), seq-len]
     # torch.stack(att_mat).shape: [2, 8, 4, 301, 301], as depth is 2.
     # the squeeze(1) is not use.
     att_mat = torch.stack(att_mat).squeeze(1)
@@ -137,7 +137,6 @@ def get_weight(att_mat):
     # To account for residual connections, we add an identity matrix to the
     # attention matrix and re-normalize the weights.
     residual_att = torch.eye(att_mat.size(3), device=att_mat.device)
-    # auto broadcast from the last dimensions.
     aug_att_mat = att_mat + residual_att
     aug_att_mat = aug_att_mat / aug_att_mat.sum(dim=-1).unsqueeze(-1)
     # Recursively multiply the weight matrices
@@ -150,7 +149,7 @@ def get_weight(att_mat):
 
     # Attention from the output token to the input space.
     v = joint_attentions[-1]
-    # v shape: [8, 300]
+    # v shape: [batch-size, max-gs(num_patches)], e.g. [8, 300]
     v = v[:, 0, 1:]
     return v
 

@@ -281,6 +281,7 @@ def fit_model(
         mask = mask[:, index_of_pathways_with_top_genes_num]
         # logger.info(mask.shape)
         logger.info('Mask loaded!')
+    # mask is a (genes, mpathways) mapping matrix
     np.save(project_path+'/mask.npy',mask)
     pd.DataFrame(pathways).to_csv(project_path+'/pathway.csv')
     pd.DataFrame(inverse, columns=[label_name]).to_csv(project_path+'/label_dictionary.csv', quoting=None)

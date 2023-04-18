@@ -22,4 +22,9 @@ ref_adata = ref_adata[:, ref_adata.var_names]
 query_adata = sc.read(data_dir / 'demo_test.h5ad')
 query_adata = query_adata[:,ref_adata.var_names]
 
-TOSICA.train(ref_adata, gmt_path='human_gobp', label_name='Celltype', epochs=3, project='hGOBP_demo')
+train = 0
+if train:
+    TOSICA.train(ref_adata, gmt_path='human_gobp', label_name='Celltype', epochs=3, project='hGOBP_demo')
+else:
+    model_weight_path = './hGOBP_demo/model-0.pth'
+    new_adata = TOSICA.pre(query_adata, model_weight_path = model_weight_path, project='hGOBP_demo')

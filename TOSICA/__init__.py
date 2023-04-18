@@ -73,7 +73,10 @@ def train(
               embed_dim=embed_dim,depth=depth,num_heads=num_heads,lr=lr, epochs= epochs, lrf=lrf)
 
 
-def pre(adata,model_weight_path,project,laten=False,save_att = 'X_att', save_lantent = 'X_lat',n_step=10000,cutoff=0.1,n_unannotated = 1,batch_size=50,embed_dim=48,depth=2,num_heads=4):
+def pre(adata, model_weight_path, project,
+        laten=False, save_att = 'X_att', save_lantent = 'X_lat',
+        n_step=10000, cutoff=0.1, n_unannotated = 1, batch_size=50,
+        embed_dim=48, depth=2, num_heads=4):
     r"""
     Prediect query data with the model and pre-trained weights.
     Parameters
@@ -117,6 +120,9 @@ def pre(adata,model_weight_path,project,laten=False,save_att = 'X_att', save_lan
         adata.var['pathway_index'] : Gene set of each colume
     """
     mask_path = os.getcwd()+'/%s'%project+'/mask.npy'
-    adata = prediect(adata,model_weight_path,project=project,mask_path = mask_path,laten=laten,
-             save_att = save_att, save_lantent = save_lantent,n_step=n_step,cutoff=cutoff,n_unannotated = n_unannotated,batch_size=batch_size,embed_dim=embed_dim,depth=depth,num_heads=num_heads)
-    return(adata)
+    adata = prediect(adata, model_weight_path, project=project,
+                     mask_path=mask_path,
+                     laten=laten, save_att=save_att, save_lantent = save_lantent,
+                     n_step=n_step, cutoff=cutoff, n_unannotated = n_unannotated, batch_size=batch_size,
+                     embed_dim=embed_dim, depth=depth, num_heads=num_heads)
+    return adata
