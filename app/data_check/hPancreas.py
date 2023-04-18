@@ -16,8 +16,9 @@ import logging
 logger = get_logger(name=__name__, log_file=Path(__file__).with_suffix('.log'), log_level=logging.INFO)
 
 
-data_dir = Path('data')
-data_file = data_dir / 'demo_train.h5ad'
+root_data_dir = Path('data')
+data_type = 'hPancreas'
+data_dir = root_data_dir / data_type
 ref_adata = sc.read(data_dir / 'demo_train.h5ad')
 logger.info('ref_adata.var_names[:5] %s', ref_adata.var_names[:5])
 logger.info('ref_adata.obs_names[:5] %s', ref_adata.obs_names[:5])

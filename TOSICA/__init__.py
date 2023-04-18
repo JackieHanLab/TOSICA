@@ -69,7 +69,7 @@ def train(
         Weights
     """
     fit_model(adata, gmt_path, project=project,pre_weights=pre_weights, label_name=label_name,
-              max_g=max_g,max_gs=max_gs,mask_ratio=mask_ratio, n_unannotated = n_unannotated,batch_size=batch_size, 
+              max_g=max_g,max_gs=max_gs,mask_ratio=mask_ratio, n_unannotated=n_unannotated, batch_size=batch_size,
               embed_dim=embed_dim,depth=depth,num_heads=num_heads,lr=lr, epochs= epochs, lrf=lrf)
 
 

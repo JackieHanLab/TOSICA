@@ -12,7 +12,10 @@ import torch
 from icecream import ic
 import TOSICA 
 
-data_dir = Path('data')
+
+root_data_dir = Path('data')
+data_type = 'hPancreas'
+data_dir = root_data_dir / data_type
 data_file = data_dir / 'demo_train.h5ad'
 ref_adata = sc.read(data_dir / 'demo_train.h5ad')
 ref_adata = ref_adata[:, ref_adata.var_names]

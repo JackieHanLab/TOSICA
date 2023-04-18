@@ -132,14 +132,14 @@ def read_gmt(fname, sep='\t', min_g=0, max_g=5000):
 
 def create_pathway_mask(feature_list, dict_pathway, add_missing=1, fully_connected=True, to_tensor=False):
     """
-    Creates a mask of shape [genes,pathways] where (i,j) = 1 if gene i is in pathway j, 0 else.
+    Creates a mask of shape [genes, pathways] where (i,j) = 1 if gene i is in pathway j, 0 else.
 
     Expects a list of genes and pathway dict.
     Note: dict_pathway should be an Ordered dict so that the ordering can be later interpreted.
 
     Args:
-        feature_list (list): List of genes in single-cell dataset.
-        dict_pathway (OrderedDict): Dictionary of gene_module:genes.
+        feature_list (list): List of genes in single-cell dataset, e.g. 3000 gene names.
+        dict_pathway (OrderedDict): Dictionary of gene_module: genes, e.g. 7000 pathways.
         add_missing (int): Number of additional, fully connected nodes.
         fully_connected (bool): Whether to fully connect additional nodes or not.
         to_tensor (False): Whether to convert mask to tensor or not.
@@ -147,29 +147,30 @@ def create_pathway_mask(feature_list, dict_pathway, add_missing=1, fully_connect
         torch.tensor/np.array: Gene module mask.
     """
     assert type(dict_pathway) == OrderedDict
-    p_mask = np.zeros((len(feature_list), len(dict_pathway)))
-    pathway = list()
-    for j, k in enumerate(dict_pathway.keys()):
-        pathway.append(k)
-        for i in range(p_mask.shape[0]):
-            if feature_list[i] in dict_pathway[k]:
-                p_mask[i,j] = 1.
+    gene_num = len(feature_list)
+    p_mask = np.zeros((gene_num, len(dict_pathway)))
+    pathways = list()
+    for pathway_i, pathway in enumerate(dict_pathway.keys()):
+        pathways.append(pathway)
+        for i in range(gene_num):
+            if feature_list[i] in dict_pathway[pathway]:
+                p_mask[i, pathway_i] = 1.
     if add_missing:
         n = 1 if type(add_missing)==bool else add_missing
         # Get non connected genes
         if not fully_connected:
             idx_0 = np.where(np.sum(p_mask, axis=1)==0)
-            vec = np.zeros((p_mask.shape[0],n))
+            vec = np.zeros((gene_num,n))
             vec[idx_0,:] = 1.
         else:
-            vec = np.ones((p_mask.shape[0], n))
+            vec = np.ones((gene_num, n))
         p_mask = np.hstack((p_mask, vec))
         for i in range(n):
             x = 'node %d' % i
-            pathway.append(x)
+            pathways.append(x)
     if to_tensor:
         p_mask = torch.Tensor(p_mask)
-    return p_mask,np.array(pathway)
+    return p_mask, np.array(pathways)
 
 def train_one_epoch(model, optimizer, data_loader, device, epoch):
     """
@@ -183,13 +184,13 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch):
     sample_num = 0
     data_loader = tqdm(data_loader)
     for step, data in enumerate(data_loader):
-        exp, label = data
+        exp, labels = data
         labels = labels.to(device)
         sample_num += exp.shape[0]
         _,pred,_ = model(exp.to(device))
         pred_classes = torch.argmax(pred, dim=1)
-        accu_num += torch.eq(pred_classes, label).sum()
-        loss = loss_function(pred, label)
+        accu_num += torch.eq(pred_classes, labels).sum()
+        loss = loss_function(pred, labels)
         loss.backward()
         accu_loss += loss.detach()
         data_loader.desc = "[train epoch {}] loss: {:.3f}, acc: {:.3f}".format(epoch,
@@ -252,10 +253,10 @@ def fit_model(
     exp_train, label_train, exp_valid, label_valid, inverse, genes = splitDataSet(adata, label_name)
     if gmt_path is None:
         mask = np.random.binomial(1, mask_ratio, size=(len(genes), max_gs))
-        pathway = list()
+        pathways = list()
         for i in range(max_gs):
             x = 'node %d' % i
-            pathway.append(x)
+            pathways.append(x)
         logger.info('Full connection!')
     else:
         if '.gmt' in gmt_path:
@@ -263,19 +264,25 @@ def fit_model(
         else:
             gmt_path = get_gmt(gmt_path)
         reactome_dict = read_gmt(gmt_path, min_g=0, max_g=max_g)
-        mask, pathway = create_pathway_mask(feature_list=genes,
+        mask, pathways = create_pathway_mask(feature_list=genes,
                                           dict_pathway=reactome_dict,
                                           add_missing=n_unannotated,
                                           fully_connected=True)
-        pathway = pathway[np.sum(mask,axis=0)>4]
-        mask = mask[:, np.sum(mask,axis=0)>4]
-        #logger.info(mask.shape)
-        pathway = pathway[sorted(np.argsort(np.sum(mask,axis=0))[-min(max_gs, mask.shape[1]):])]
-        mask = mask[:, sorted(np.argsort(np.sum(mask,axis=0))[-min(max_gs, mask.shape[1]):])]
-        #logger.info(mask.shape)
+        # Keeps pathways which have more than 4 genes
+        pathways = pathways[np.sum(mask, axis=0)>4]
+        # mask.shape e.g. (3000, 3479)
+        mask = mask[:, np.sum(mask, axis=0)>4]
+        # logger.info(mask.shape)
+        selected_pathway_num = min(max_gs, mask.shape[1])
+        # logger.info('selected_pathway_num %s', selected_pathway_num)
+        sorted_pathway_index = np.argsort(np.sum(mask, axis=0))
+        index_of_pathways_with_top_genes_num = sorted(sorted_pathway_index[-selected_pathway_num:])
+        pathways = pathways[index_of_pathways_with_top_genes_num]
+        mask = mask[:, index_of_pathways_with_top_genes_num]
+        # logger.info(mask.shape)
         logger.info('Mask loaded!')
     np.save(project_path+'/mask.npy',mask)
-    pd.DataFrame(pathway).to_csv(project_path+'/pathway.csv')
+    pd.DataFrame(pathways).to_csv(project_path+'/pathway.csv')
     pd.DataFrame(inverse, columns=[label_name]).to_csv(project_path+'/label_dictionary.csv', quoting=None)
     num_classes = np.int64(torch.max(label_train)+1)
     #logger.info(num_classes)
@@ -326,5 +333,3 @@ def fit_model(
         else:
             torch.save(model.state_dict(), "/%s"%project_path+"/model-{}.pth".format(epoch))
     logger.info('Training finished!')
-
-#train(adata, gmt_path, pre_weights, batch_size=8, epochs=20)
