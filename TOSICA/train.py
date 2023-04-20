@@ -292,11 +292,11 @@ def fit_model(
     train_loader = torch.utils.data.DataLoader(train_dataset,
                                                batch_size=batch_size,
                                                shuffle=True,
-                                               pin_memory=True,drop_last=True)
+                                               pin_memory=True, drop_last=False)
     valid_loader = torch.utils.data.DataLoader(valid_dataset,
                                              batch_size=batch_size,
                                              shuffle=False,
-                                             pin_memory=True,drop_last=True)
+                                             pin_memory=True, drop_last=False)
     model = create_model(
         num_classes=num_classes, num_genes=len(genes), mask=mask, embed_dim=embed_dim,
         depth=depth, num_heads=num_heads, has_logits=False).to(device)

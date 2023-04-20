@@ -8,6 +8,7 @@ import scanpy as sc
 import anndata as ad
 from .TOSICA_model import scTrans_model as create_model
 from utils.log_util import logger
+from torch.utils.data import DataLoader
 
 
 #model_weight_path = "./weights20220429/model-5.pth"
@@ -43,8 +44,10 @@ def get_weight(att_mat,pathway):
     v.columns = pathway
     return v
 
-def prediect(adata, model_weight_path, project, mask_path, laten=False, save_att='X_att', save_lantent='X_lat',
-             n_step=10000, cutoff=0.1, n_unannotated=1, batch_size=50, embed_dim=48, depth=2, num_heads=4):
+def prediect(adata, model_weight_path, project, mask_path, get_latent_output=False, 
+             save_att='X_att', save_lantent='X_lat',
+             n_step=10000, cutoff=0.1, n_unannotated=1, 
+             batch_size=50, embed_dim=48, depth=2, num_heads=4):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     logger.info(device)
     num_genes = adata.shape[1]
@@ -81,17 +84,21 @@ def prediect(adata, model_weight_path, project, mask_path, laten=False, save_att
     latent = torch.empty([0, embed_dim]).cpu()
     att = torch.empty([0, len(pathway)]).cpu()
     predict_class = np.empty(shape=0)
-    pre_class = np.empty(shape=0)
+    probabilities = np.empty(shape=0)
     latent = torch.squeeze(latent).cpu().numpy()
     # l_p shape: (0, embed_dim+2), att shape: (0, len(pathway)+2)
-    l_p = np.c_[latent, predict_class, pre_class]
-    att = np.c_[att, predict_class, pre_class]
+    l_p = np.c_[latent, predict_class, probabilities]
+    att = np.c_[att, predict_class, probabilities]
     all_line = adata.shape[0]
     n_line = 0
     adata_list = []
     while (n_line) <= all_line:
         if (all_line-n_line)%batch_size != 1:
-            expdata = pd.DataFrame(todense(adata[n_line:n_line+min(n_step,(all_line-n_line))]),index=np.array(adata[n_line:n_line+min(n_step,(all_line-n_line))].obs_names).tolist(), columns=np.array(adata.var_names).tolist())
+            start_i = n_line
+            end_i = n_line + min(n_step,(all_line-n_line))
+            sub_data = adata[start_i: end_i]
+            expdata = pd.DataFrame(todense(sub_data), index=np.array(sub_data.obs_names).tolist(),
+                                   columns=np.array(adata.var_names).tolist())
             logger.info(n_line)
             n_line = n_line+n_step
         else:
@@ -100,10 +107,7 @@ def prediect(adata, model_weight_path, project, mask_path, laten=False, save_att
             logger.info(n_line)
         expdata = np.array(expdata)
         expdata = torch.from_numpy(expdata.astype(np.float32))
-        data_loader = torch.utils.data.DataLoader(expdata,
-                                                 batch_size=batch_size,
-                                                 shuffle=False,
-                                                 pin_memory=True)
+        data_loader = DataLoader(expdata, batch_size=batch_size, shuffle=False, pin_memory=True)
         with torch.no_grad():
             # predict class
             for step, data in enumerate(data_loader):
@@ -111,28 +115,34 @@ def prediect(adata, model_weight_path, project, mask_path, laten=False, save_att
                 exp = data
                 lat, pre, weights = model(exp.to(device))
                 pre = torch.squeeze(pre).cpu()
-                pre = F.softmax(pre,1)
+                pre = F.softmax(pre, 1)
                 predict_class = np.empty(shape=0)
-                pre_class = np.empty(shape=0)
+                probabilities = np.empty(shape=0)
+                # TODO dqc ugly and bad duplicate logic
                 for i in range(len(pre)):
                     if torch.max(pre, dim=1)[0][i] >= cutoff:
                         predict_class = np.r_[predict_class,torch.max(pre, dim=1)[1][i].numpy()]
                     else:
+                        # n_c = len(dictionary), i.e. invalid label, because the max probability is less than cutoff. 
                         predict_class = np.r_[predict_class,n_c]
-                    pre_class = np.r_[pre_class,torch.max(pre, dim=1)[0][i]]
+                    probabilities = np.r_[probabilities,torch.max(pre, dim=1)[0][i]]
                 l_p = torch.squeeze(lat).cpu().numpy()
                 att = torch.squeeze(weights).cpu().numpy()
-                meta = np.c_[predict_class,pre_class]
+                meta = np.c_[predict_class,probabilities]
                 meta = pd.DataFrame(meta)
                 meta.columns = ['Prediction','Probability']
                 meta.index = meta.index.astype('str')
-                if laten:
+                if get_latent_output:
                     l_p = l_p.astype('float32')
                     new = sc.AnnData(l_p, obs=meta)
                 else:
+                    # there is n_unannotated and so minus it.
                     att = att[:,0:(len(pathway)-n_unannotated)]
                     att = att.astype('float32')
-                    varinfo = pd.DataFrame(pathway.iloc[0:(len(pathway)-1),0].values,index=pathway.iloc[0:(len(pathway)-1),0],columns=['pathway_index'])
+                    var_max_index = len(pathway)-1
+                    varinfo = pd.DataFrame(pathway.iloc[:var_max_index, 0].values, 
+                                           index=pathway.iloc[:var_max_index, 0],
+                                           columns=['pathway_index'])
                     new = sc.AnnData(att, obs=meta, var = varinfo)
                 adata_list.append(new)
     logger.info(all_line)
@@ -140,4 +150,4 @@ def prediect(adata, model_weight_path, project, mask_path, laten=False, save_att
     new.obs.index = adata.obs.index
     new.obs['Prediction'] = new.obs['Prediction'].map(dic)
     new.obs[adata.obs.columns] = adata.obs[adata.obs.columns].values
-    return(new)
+    return new

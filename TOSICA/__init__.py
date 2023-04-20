@@ -74,7 +74,7 @@ def train(
 
 
 def pre(adata, model_weight_path, project,
-        laten=False, save_att = 'X_att', save_lantent = 'X_lat',
+        get_latent_output=False, save_att = 'X_att', save_lantent = 'X_lat',
         n_step=10000, cutoff=0.1, n_unannotated = 1, batch_size=50,
         embed_dim=48, depth=2, num_heads=4):
     r"""
@@ -89,7 +89,7 @@ def pre(adata, model_weight_path, project,
         The path to the mask matrix.
     project
         The name of project.
-    laten
+    get_latent_output
         Get laten output.
     save_att
         The name of the attention matrix to be added in the adata.obsm.
@@ -122,7 +122,7 @@ def pre(adata, model_weight_path, project,
     mask_path = os.getcwd()+'/%s'%project+'/mask.npy'
     adata = prediect(adata, model_weight_path, project=project,
                      mask_path=mask_path,
-                     laten=laten, save_att=save_att, save_lantent = save_lantent,
+                     get_latent_output=get_latent_output, save_att=save_att, save_lantent = save_lantent,
                      n_step=n_step, cutoff=cutoff, n_unannotated = n_unannotated, batch_size=batch_size,
                      embed_dim=embed_dim, depth=depth, num_heads=num_heads)
     return adata
