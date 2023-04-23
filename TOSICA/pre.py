@@ -13,7 +13,7 @@ from .TOSICA_model import scTrans_model as create_model
 
 def todense(adata):
     import scipy
-    if isinstance(adata.X, scipy.sparse.csr_matrix):
+    if isinstance(adata.X, scipy.sparse.csr_matrix) or isinstance(adata.X, scipy.sparse.csc_matrix):
         return adata.X.todense()
     else:
         return adata.X
