@@ -2,6 +2,7 @@
 *.npy
 z.*
 /z?.*
+zlog
 
 ### Python ###
 # Byte-compiled / optimized / DLL files

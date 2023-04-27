@@ -52,38 +52,47 @@ def balance_populations(data):
     logger.info('%s', data.shape)
     ct_names = np.unique(data[:,-1])
     ct_counts = pd.value_counts(data[:,-1])
-    # logger.info('%s', ct_counts)
-    # logger.info('%s', len(ct_counts))
-    # logger.info('%s', 2000000/len(ct_counts))
-    max_val = min(ct_counts.max(),np.int32(2000000/len(ct_counts)))
+    logger.info('ct_counts\n%s', ct_counts)
+    logger.info('len(ct_counts) %s', len(ct_counts))
+    logger.info('2000000/len(ct_counts) %s', 2000000/len(ct_counts))
+    max_val = min(ct_counts.max(), np.int32(2000000/len(ct_counts)))
     logger.info('max_val %s', max_val)
-    balanced_data = np.empty(shape=(1,data.shape[1]),dtype=np.float32)
+    balanced_data = np.empty(shape=(1, data.shape[1]), dtype=np.float32)
     for ct in ct_names:
         tmp = data[data[:,-1] == ct]
-        # TODO if len(tmp) > max_val, use np.random.choice(range(len(tmp)), max_val, replace=False)
-        idx = np.random.choice(range(len(tmp)), max_val)
+        orig_num = len(tmp)
+        if orig_num >= max_val:
+            idx = np.random.choice(range(orig_num), max_val, replace=False)
+        else:
+            random_num = max_val - orig_num
+            random_idx = np.random.choice(range(orig_num), random_num)
+            basic_index = np.array(range(orig_num))
+            idx = np.r_[random_idx, basic_index]
         tmp_X = tmp[idx]
         # the same as np.concatenate([balanced_data,tmp_X])
         balanced_data = np.r_[balanced_data,tmp_X]
     return np.delete(balanced_data,0,axis=0)
 
-def splitDataSet(adata,label_name='Celltype', tr_ratio= 0.7):
+def splitDataSet(adata, label_name='Celltype', tr_ratio= 0.7):
     """
     Split data set into training set and test set.
 
     """
     label_encoder = LabelEncoder()
-    el_data = pd.DataFrame(todense(adata),index=np.array(adata.obs_names).tolist(), columns=np.array(adata.var_names).tolist())
+    el_data = pd.DataFrame(
+        todense(adata), index=np.array(adata.obs_names).tolist(), columns=np.array(adata.var_names).tolist())
+    logger.info('el_data.shape %s', el_data.shape)
     el_data[label_name] = adata.obs[label_name].astype('str')
-    #el_data = pd.read_table(data_path,sep=",",header=0,index_col=0)
+    logger.info('el_data with label shape %s', el_data.shape)
     genes = el_data.columns.values[:-1]
     el_data = np.array(el_data)
     # el_data = np.delete(el_data,-1,axis=1)
-    el_data[:,-1] = label_encoder.fit_transform(el_data[:,-1])
-    inverse = label_encoder.inverse_transform(range(0,np.max(el_data[:,-1])+1))
+    el_data[:, -1] = label_encoder.fit_transform(el_data[:, -1])
+    inverse = label_encoder.inverse_transform(range(0, np.max(el_data[:, -1])+1))
     logger.info('label inverse %s', inverse)
     el_data = el_data.astype(np.float32)
     el_data = balance_populations(data = el_data)
+    logger.info('After balance_populations, train-valid shape %s', el_data.shape)
     n_genes = len(el_data[1])-1
     train_size = int(len(el_data) * tr_ratio)
     train_dataset, valid_dataset = torch.utils.data.random_split(el_data, [train_size, len(el_data)-train_size])
@@ -201,6 +210,7 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch):
             sys.exit(1)
         optimizer.step()
         optimizer.zero_grad()
+        torch.cuda.empty_cache()
     return accu_loss.item() / (step + 1), accu_num.item() / sample_num
 
 @torch.no_grad()
@@ -230,7 +240,7 @@ def fit_model(
     project=None, pre_weights='', label_name='Celltype', max_g=300, max_gs=300,
     mask_ratio=0.015,
     n_unannotated=1,
-    batch_size=8,
+    batch_size=6,
     embed_dim=48,
     depth=2,
     num_heads=4,
@@ -249,6 +259,7 @@ def fit_model(
     project_path = os.getcwd()+'/%s'%project
     if os.path.exists(project_path) is False:
         os.makedirs(project_path)
+    logger.info('project_path %s', project_path)
     tb_writer = SummaryWriter()
     exp_train, label_train, exp_valid, label_valid, inverse, genes = splitDataSet(adata, label_name)
     if gmt_path is None:
@@ -279,7 +290,7 @@ def fit_model(
         index_of_pathways_with_top_genes_num = sorted(sorted_pathway_index[-selected_pathway_num:])
         pathways = pathways[index_of_pathways_with_top_genes_num]
         mask = mask[:, index_of_pathways_with_top_genes_num]
-        # logger.info(mask.shape)
+        logger.info(mask.shape)
         logger.info('Mask loaded!')
     # mask is a (genes, mpathways) mapping matrix
     np.save(project_path+'/mask.npy',mask)

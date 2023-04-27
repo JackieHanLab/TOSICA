@@ -38,10 +38,10 @@ class FeatureEmbed(nn.Module):
         self.num_patches = mask.shape[1]
         self.embed_dim = embed_dim
         # input mask shape is (num_genes, max_gs=300), after repeat the shape is (num_genes, max_gs*embed_dim).
-        # In tutorial, e.g. after np.repeat(), the mask is 3000*14400.
+        # In tutorial, e.g. after np.repeat(), the mask is 3000*14400, 14400 is from 300*48(embed_dim 48).
         mask = np.repeat(mask, embed_dim, axis=1)
-        self.mask = mask
-        self.fe = CustomizedLinear(self.mask)
+        # self.mask = mask
+        self.fe = CustomizedLinear(mask)
         self.norm = norm_layer(embed_dim) if norm_layer else nn.Identity()
 
     def forward(self, x):

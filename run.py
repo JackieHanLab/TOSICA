@@ -9,8 +9,9 @@ import pandas as pd
 from pandas import DataFrame
 import os, sys
 import torch
-from icecream import ic
 import TOSICA 
+from utils.log_util import logger
+from utils.arg_util import ArgparseUtil
 
 
 root_data_dir = Path('data')
@@ -22,9 +23,9 @@ ref_adata = ref_adata[:, ref_adata.var_names]
 query_adata = sc.read(data_dir / 'demo_test.h5ad')
 query_adata = query_adata[:,ref_adata.var_names]
 
-train = 0
+train = 1
 if train:
-    TOSICA.train(ref_adata, gmt_path='human_gobp', label_name='Celltype', epochs=3, project='hGOBP_demo')
+    TOSICA.train(ref_adata, gmt_path='human_gobp', label_name='Celltype', epochs=20, project='hGOBP_demo')
 else:
     model_weight_path = './hGOBP_demo/model-0.pth'
     new_adata = TOSICA.pre(query_adata, model_weight_path = model_weight_path, project='hGOBP_demo')
