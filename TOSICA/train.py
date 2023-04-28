@@ -12,7 +12,7 @@ import torch
 import torch.optim as optim
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.utils.tensorboard import SummaryWriter
-import time
+from datetime import datetime
 import platform
 from utils.log_util import logger
 from .TOSICA_model import scTrans_model as create_model
@@ -236,7 +236,7 @@ def evaluate(model, data_loader, device, epoch):
     return accu_loss.item() / (step + 1), accu_num.item() / sample_num
 
 def fit_model(
-    adata, gmt_path,
+    adata, gmt_path, data_type,
     project=None, pre_weights='', label_name='Celltype', max_g=300, max_gs=300,
     mask_ratio=0.015,
     n_unannotated=1,
@@ -253,7 +253,7 @@ def fit_model(
     device = 'cuda:0'
     device = torch.device(device if torch.cuda.is_available() else "cpu")
     logger.info(device)
-    today = time.strftime('%Y%m%d',time.localtime(time.time()))
+    today = datetime.today().strftime('%y%m%d')
     #train_weights = os.getcwd()+"/weights%s"%today
     project = project or gmt_path.replace('.gmt','')+'_%s'%today
     project_path = os.getcwd()+'/%s'%project
@@ -340,8 +340,9 @@ def fit_model(
         tb_writer.add_scalar(tags[2], val_loss, epoch)
         tb_writer.add_scalar(tags[3], val_acc, epoch)
         tb_writer.add_scalar(tags[4], optimizer.param_groups[0]["lr"], epoch)
+        model_path = f'model_files/{data_type}-{today}'
         if platform.system().lower() == 'windows':
-            torch.save(model.state_dict(), project_path+"/model-{}.pth".format(epoch))
+            torch.save(model.state_dict(), model_path+"/model-{}.pth".format(epoch))
         else:
-            torch.save(model.state_dict(), "/%s"%project_path+"/model-{}.pth".format(epoch))
+            torch.save(model.state_dict(), model_path+"/model-{}.pth".format(epoch))
     logger.info('Training finished!')

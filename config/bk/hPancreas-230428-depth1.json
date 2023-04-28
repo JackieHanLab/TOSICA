@@ -1,0 +1,11 @@
+{
+    "epochs": 20,
+    "depth": 1,
+    "num_heads": 4,
+    "lr": 0.001,
+    "gmt_path": "human_gobp",
+    "seed": 1,
+    "best_epoch": 19,
+    "embed_dim": 48
+
+}
