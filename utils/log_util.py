@@ -10,7 +10,8 @@ _nameToLevel = {
    'DEBUG': logging.DEBUG,
 }
 fmt = '%(asctime)s %(filename)s %(lineno)d: %(message)s'
-datefmt = '%y-%m-%d %H:%M:%S'
+datefmt = '%y-%m-%d %H:%M'
+# datefmt = '%y-%m-%d %H:%M:%S'
 
 
 def get_logger(name=None, log_file=None, log_level=logging.DEBUG, log_level_name=''):

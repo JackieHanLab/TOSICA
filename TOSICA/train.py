@@ -323,6 +323,9 @@ def fit_model(
     optimizer = optim.SGD(pg, lr=lr, momentum=0.9, weight_decay=5E-5)
     lf = lambda x: ((1 + math.cos(x * math.pi / epochs)) / 2) * (1 - lrf) + lrf
     scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lf)
+    early_stop_acc = 0.9999
+    least_val_loss = float('inf')
+    model_path = f'model_files/{data_type}-{today}'
     for epoch in range(epochs):
         train_loss, train_acc = train_one_epoch(model=model,
                                                 optimizer=optimizer,
@@ -335,14 +338,25 @@ def fit_model(
                                      device=device,
                                      epoch=epoch)
         tags = ["train_loss", "train_acc", "val_loss", "val_acc", "learning_rate"]
+        logger.info('train_loss %s train_acc, %s val_loss %s val_acc, %s at epoch %s',
+                    train_loss, train_acc, val_loss, val_acc, epoch)
         tb_writer.add_scalar(tags[0], train_loss, epoch)
         tb_writer.add_scalar(tags[1], train_acc, epoch)
         tb_writer.add_scalar(tags[2], val_loss, epoch)
         tb_writer.add_scalar(tags[3], val_acc, epoch)
         tb_writer.add_scalar(tags[4], optimizer.param_groups[0]["lr"], epoch)
-        model_path = f'model_files/{data_type}-{today}'
-        if platform.system().lower() == 'windows':
-            torch.save(model.state_dict(), model_path+"/model-{}.pth".format(epoch))
-        else:
-            torch.save(model.state_dict(), model_path+"/model-{}.pth".format(epoch))
+        if val_loss < least_val_loss:
+            least_val_loss = val_loss
+            best_epoch = epoch
+            val_acc_at_least_val_loss = val_acc
+            if platform.system().lower() == 'windows':
+                torch.save(model.state_dict(), model_path+"/model-{}.pth".format(epoch))
+            else:
+                torch.save(model.state_dict(), model_path+"/model-{}.pth".format(epoch))
+        logger.info('least_val_loss %s at best_epoch %s, val_acc_at_least_val_loss', 
+                    least_val_loss, best_epoch, val_acc_at_least_val_loss)
+        if train_acc >= early_stop_acc:
+            logger.info('Average train_acc %s >= early_stop_acc {} at epoch %d, so early stop',
+                        train_acc, early_stop_acc, epoch)
+            return
     logger.info('Training finished!')

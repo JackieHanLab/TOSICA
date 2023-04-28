@@ -8,9 +8,9 @@
     "n_unannotated": 1,
     "batch_size": 8,
     "embed_dim": 48,
-    "depth": 2,
+    "depth": 1,
     "num_heads": 4,
     "lr": 0.001,
-    "epochs": 20,
+    "epochs": 30,
     "lrf": 0.01
 }

@@ -39,7 +39,7 @@ def read_train_config():
 train = 1
 if train:
     TOSICA.train(
-        ref_adata, gmt_path='human_gobp', data_type=data_type, label_name='Celltype', epochs=20, project='hGOBP_demo')
+        ref_adata, gmt_path='human_gobp', data_type=data_type, label_name='Celltype', epochs=30, project='hGOBP_demo')
 else:
     model_weight_path = read_train_config()
     new_adata = TOSICA.pre(query_adata, model_weight_path=model_weight_path, project='hGOBP_demo')
