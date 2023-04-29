@@ -27,7 +27,7 @@ class ArgparseUtil(object):
         self.parser.add_argument("--task_name", type=str, default='', help="anti_inflammation, toxic")
         self.parser.add_argument("--enable_train", type=int, default=1, help="0 is false, 1 is true")
         self.parser.add_argument("--read_dataset_cache", type=int, default=1, help="0 is false, overwite; 1 true")
-        self.parser.add_argument("--n_epoch", type=int, default=300, help="")
+        self.parser.add_argument("--n_epoch", type=int, default=30, help="")
         self.parser.add_argument("--learning_rate", type=float, default=0.0005, help="")
         self.parser.add_argument("--dropout", type=float, default=0.5, help="")
         args = self.parser.parse_args()

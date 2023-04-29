@@ -7,6 +7,7 @@ from tqdm import tqdm
 from sklearn.preprocessing import LabelEncoder
 from collections import OrderedDict
 import os
+import json
 import math
 import torch
 import torch.optim as optim
@@ -16,6 +17,8 @@ from datetime import datetime
 import platform
 from utils.log_util import logger
 from .TOSICA_model import scTrans_model as create_model
+from pathlib import Path
+from sklearn.model_selection import train_test_split
 
 
 def set_seed(seed):
@@ -70,8 +73,8 @@ def balance_populations(data):
             idx = np.r_[random_idx, basic_index]
         tmp_X = tmp[idx]
         # the same as np.concatenate([balanced_data,tmp_X])
-        balanced_data = np.r_[balanced_data,tmp_X]
-    return np.delete(balanced_data,0,axis=0)
+        balanced_data = np.r_[balanced_data, tmp_X]
+    return np.delete(balanced_data, 0, axis=0)
 
 def splitDataSet(adata, label_name='Celltype', tr_ratio= 0.7):
     """
@@ -94,12 +97,15 @@ def splitDataSet(adata, label_name='Celltype', tr_ratio= 0.7):
     el_data = balance_populations(data = el_data)
     logger.info('After balance_populations, train-valid shape %s', el_data.shape)
     n_genes = len(el_data[1])-1
-    train_size = int(len(el_data) * tr_ratio)
-    train_dataset, valid_dataset = torch.utils.data.random_split(el_data, [train_size, len(el_data)-train_size])
-    exp_train = torch.from_numpy(train_dataset.dataset[:,:n_genes].astype(np.float32))
-    label_train = torch.from_numpy(train_dataset.dataset[:,-1].astype(np.int64))
-    exp_valid = torch.from_numpy(valid_dataset.dataset[:,:n_genes].astype(np.float32))
-    label_valid = torch.from_numpy(valid_dataset.dataset[:,-1].astype(np.int64))
+    train_dataset, valid_dataset = train_test_split(el_data, test_size=1-tr_ratio, random_state=0)
+    exp_train = torch.from_numpy(train_dataset[:,:n_genes].astype(np.float32))
+    label_train = torch.from_numpy(train_dataset[:,-1].astype(np.int64))
+    exp_valid = torch.from_numpy(valid_dataset[:,:n_genes].astype(np.float32))
+    label_valid = torch.from_numpy(valid_dataset[:,-1].astype(np.int64))
+    logger.info('len(exp_train) %s', len(exp_train))
+    logger.info('len(exp_valid) %s', len(exp_valid))
+    logger.info('exp_train[:5]\n%s', exp_train[:5])
+    logger.info('label_train[:10]\n%s', label_train[:10])
     return exp_train, label_train, exp_valid, label_valid, inverse, genes
 
 def get_gmt(gmt):
@@ -226,13 +232,13 @@ def evaluate(model, data_loader, device, epoch):
         labels = labels.to(device)
         sample_num += exp.shape[0]
         _,pred,_ = model(exp.to(device))
-        pred_classes = torch.max(pred, dim=1)[1]
+        pred_classes = torch.argmax(pred, dim=1)
         accu_num += torch.eq(pred_classes, labels).sum()
         loss = loss_function(pred, labels)
         accu_loss += loss
-        data_loader.desc = "[valid epoch {}] loss: {:.3f}, acc: {:.3f}".format(epoch,
-                                                                               accu_loss.item() / (step + 1),
-                                                                               accu_num.item() / sample_num)
+        # data_loader.desc = "[valid epoch {}] loss: {:.3f}, acc: {:.3f}".format(epoch,
+        #                                                                        accu_loss.item() / (step + 1),
+        #                                                                        accu_num.item() / sample_num)
     return accu_loss.item() / (step + 1), accu_num.item() / sample_num
 
 def fit_model(
@@ -246,10 +252,10 @@ def fit_model(
     num_heads=4,
     lr=0.001,
     epochs=10,
+    seed=0,
     lrf=0.01
 ):
-    GLOBAL_SEED = 1
-    set_seed(GLOBAL_SEED)
+    set_seed(seed)
     device = 'cuda:0'
     device = torch.device(device if torch.cuda.is_available() else "cpu")
     logger.info(device)
@@ -303,11 +309,11 @@ def fit_model(
     train_loader = torch.utils.data.DataLoader(train_dataset,
                                                batch_size=batch_size,
                                                shuffle=True,
-                                               pin_memory=True, drop_last=False)
+                                               pin_memory=True, drop_last=True)
     valid_loader = torch.utils.data.DataLoader(valid_dataset,
                                              batch_size=batch_size,
                                              shuffle=False,
-                                             pin_memory=True, drop_last=False)
+                                             pin_memory=True, drop_last=True)
     model = create_model(
         num_classes=num_classes, num_genes=len(genes), mask=mask, embed_dim=embed_dim,
         depth=depth, num_heads=num_heads, has_logits=False).to(device)
@@ -325,7 +331,8 @@ def fit_model(
     scheduler = lr_scheduler.LambdaLR(optimizer, lr_lambda=lf)
     early_stop_acc = 0.9999
     least_val_loss = float('inf')
-    model_path = f'model_files/{data_type}-{today}'
+    model_path = f'model_files/{data_type}-{today}-seed{seed}'
+    Path(model_path).mkdir(exist_ok=1)
     for epoch in range(epochs):
         train_loss, train_acc = train_one_epoch(model=model,
                                                 optimizer=optimizer,
@@ -349,14 +356,32 @@ def fit_model(
             least_val_loss = val_loss
             best_epoch = epoch
             val_acc_at_least_val_loss = val_acc
+            train_acc_at_least_val_loss = train_acc
             if platform.system().lower() == 'windows':
                 torch.save(model.state_dict(), model_path+"/model-{}.pth".format(epoch))
             else:
                 torch.save(model.state_dict(), model_path+"/model-{}.pth".format(epoch))
-        logger.info('least_val_loss %s at best_epoch %s, val_acc_at_least_val_loss', 
-                    least_val_loss, best_epoch, val_acc_at_least_val_loss)
+            logger.info('least_val_loss %s at best_epoch %s, val_acc_at_least_val_loss %s',
+                        least_val_loss, best_epoch, val_acc_at_least_val_loss)
         if train_acc >= early_stop_acc:
             logger.info('Average train_acc %s >= early_stop_acc {} at epoch %d, so early stop',
                         train_acc, early_stop_acc, epoch)
-            return
+            break
+    
+    train_config_file = f'config/{data_type}-{today}-seed{seed}.json'
+    save_train_configs(
+        train_config_file, project=project, pre_weights=pre_weights, label_name=label_name,
+        max_g=max_g, max_gs=max_gs, mask_ratio=mask_ratio, n_unannotated=n_unannotated, batch_size=batch_size,
+        embed_dim=embed_dim, depth=depth, num_heads=num_heads,lr=lr, epochs= epochs, seed=seed, lrf=lrf,
+        least_val_loss=least_val_loss,
+        best_epoch=best_epoch,
+        val_acc_at_least_val_loss=val_acc_at_least_val_loss,
+        train_acc_at_least_val_loss=train_acc_at_least_val_loss,
+        )
     logger.info('Training finished!')
+
+
+def save_train_configs(train_config_file, **kw):
+    """  """
+    with open(train_config_file, 'w', encoding='utf-8') as f:
+        json.dump(kw, f, ensure_ascii=False, indent=4)

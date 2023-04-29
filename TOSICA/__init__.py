@@ -11,16 +11,10 @@ name = "TOSICA"
 # __version__ = 1.0
 
 
-def save_train_configs(train_config_file, **kw):
-    """  """
-    with open(train_config_file, 'w', encoding='utf-8') as f:
-        json.dump(kw, f, ensure_ascii=False, indent=4)
-
-
 def train(
     adata, gmt_path, data_type, project=None, pre_weights='', label_name='Celltype',
     max_g=300, max_gs=300, mask_ratio =0.015, n_unannotated = 1,
-    batch_size=8, embed_dim=48, depth=1, num_heads=4, lr=0.001, epochs= 10, lrf=0.01):
+    batch_size=8, embed_dim=48, depth=1, num_heads=4, lr=0.001, epochs= 10, seed=3, lrf=0.01):
     r"""
     Fit the model with reference data
     Parameters
@@ -68,15 +62,9 @@ def train(
     ./weights20220603/
         Weights
     """
-    today = datetime.today().strftime('%y%m%d')
-    train_config_file = f'config/{data_type}-{today}.json'
-    save_train_configs(train_config_file, project=project, pre_weights=pre_weights, label_name=label_name,
-              max_g=max_g, max_gs=max_gs, mask_ratio=mask_ratio, n_unannotated=n_unannotated, batch_size=batch_size,
-              embed_dim=embed_dim, depth=depth, num_heads=num_heads,lr=lr, epochs= epochs, lrf=lrf)
-    
     fit_model(adata, gmt_path, data_type, project=project, pre_weights=pre_weights, label_name=label_name,
               max_g=max_g, max_gs=max_gs, mask_ratio=mask_ratio, n_unannotated=n_unannotated, batch_size=batch_size,
-              embed_dim=embed_dim, depth=depth, num_heads=num_heads, lr=lr, epochs= epochs, lrf=lrf)
+              embed_dim=embed_dim, depth=depth, num_heads=num_heads, lr=lr, epochs= epochs, seed=seed, lrf=lrf)
 
 
 def pre(adata, model_weight_path, project,
