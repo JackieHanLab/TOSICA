@@ -53,8 +53,9 @@ class MyDataSet(Dataset):
 
 def balance_populations(data):
     logger.info('%s', data.shape)
-    ct_names = np.unique(data[:,-1])
-    ct_counts = pd.value_counts(data[:,-1])
+    data_label = data[:,-1]
+    ct_names = np.unique(data_label)
+    ct_counts = pd.value_counts(data_label)
     logger.info('ct_counts\n%s', ct_counts)
     logger.info('len(ct_counts) %s', len(ct_counts))
     logger.info('2000000/len(ct_counts) %s', 2000000/len(ct_counts))
@@ -62,24 +63,27 @@ def balance_populations(data):
     logger.info('max_val %s', max_val)
     balanced_data = np.empty(shape=(1, data.shape[1]), dtype=np.float32)
     for ct in ct_names:
-        tmp = data[data[:,-1] == ct]
+        tmp = data[data_label == ct]
+        logger.info('ct %s tmp[:5]\n%s', ct, tmp[:5])
         orig_num = len(tmp)
+        logger.info('orig_num %s', orig_num)
         if orig_num >= max_val:
             idx = np.random.choice(range(orig_num), max_val, replace=False)
+            logger.info('idx[:5] %s', idx[:5])
         else:
             random_num = max_val - orig_num
             random_idx = np.random.choice(range(orig_num), random_num)
             basic_index = np.array(range(orig_num))
             idx = np.r_[random_idx, basic_index]
+            logger.info('idx[:5] %s', idx[:5])
         tmp_X = tmp[idx]
         # the same as np.concatenate([balanced_data,tmp_X])
         balanced_data = np.r_[balanced_data, tmp_X]
     return np.delete(balanced_data, 0, axis=0)
 
-def splitDataSet(adata, label_name='Celltype', tr_ratio= 0.7):
+def splitDataSet(adata, label_name='Celltype', tr_ratio=0.7, data_seed=0):
     """
     Split data set into training set and test set.
-
     """
     label_encoder = LabelEncoder()
     el_data = pd.DataFrame(
@@ -94,10 +98,12 @@ def splitDataSet(adata, label_name='Celltype', tr_ratio= 0.7):
     inverse = label_encoder.inverse_transform(range(0, np.max(el_data[:, -1])+1))
     logger.info('label inverse %s', inverse)
     el_data = el_data.astype(np.float32)
+    logger.info('orig el_data[:5]\n%s', el_data[:5])
     el_data = balance_populations(data = el_data)
-    logger.info('After balance_populations, train-valid shape %s', el_data.shape)
+    logger.info('After balance_populations el_data[:5]\n%s', el_data[:5])
+    logger.info('After balance_populations, train+valid shape %s', el_data.shape)
     n_genes = len(el_data[1])-1
-    train_dataset, valid_dataset = train_test_split(el_data, test_size=1-tr_ratio, random_state=0)
+    train_dataset, valid_dataset = train_test_split(el_data, test_size=1-tr_ratio, random_state=data_seed)
     exp_train = torch.from_numpy(train_dataset[:,:n_genes].astype(np.float32))
     label_train = torch.from_numpy(train_dataset[:,-1].astype(np.int64))
     exp_valid = torch.from_numpy(valid_dataset[:,:n_genes].astype(np.float32))
@@ -107,6 +113,7 @@ def splitDataSet(adata, label_name='Celltype', tr_ratio= 0.7):
     logger.info('exp_train[:5]\n%s', exp_train[:5])
     logger.info('label_train[:10]\n%s', label_train[:10])
     return exp_train, label_train, exp_valid, label_valid, inverse, genes
+
 
 def get_gmt(gmt):
     import pathlib
@@ -253,9 +260,13 @@ def fit_model(
     lr=0.001,
     epochs=10,
     seed=0,
+    data_seed=0,
     lrf=0.01
 ):
     set_seed(seed)
+    logger.info('seed %s', seed)
+    # np.random is used to create mock data or split data
+    np.random.seed(data_seed)
     device = 'cuda:0'
     device = torch.device(device if torch.cuda.is_available() else "cpu")
     logger.info(device)
@@ -267,7 +278,7 @@ def fit_model(
         os.makedirs(project_path)
     logger.info('project_path %s', project_path)
     tb_writer = SummaryWriter()
-    exp_train, label_train, exp_valid, label_valid, inverse, genes = splitDataSet(adata, label_name)
+    exp_train, label_train, exp_valid, label_valid, inverse, genes = splitDataSet(adata, label_name, data_seed)
     if gmt_path is None:
         mask = np.random.binomial(1, mask_ratio, size=(len(genes), max_gs))
         pathways = list()
@@ -299,7 +310,7 @@ def fit_model(
         logger.info(mask.shape)
         logger.info('Mask loaded!')
     # mask is a (genes, mpathways) mapping matrix
-    np.save(project_path+'/mask.npy',mask)
+    np.save(project_path+'/mask.npy', mask)
     pd.DataFrame(pathways).to_csv(project_path+'/pathway.csv')
     pd.DataFrame(inverse, columns=[label_name]).to_csv(project_path+'/label_dictionary.csv', quoting=None)
     num_classes = np.int64(torch.max(label_train)+1)

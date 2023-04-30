@@ -149,8 +149,8 @@ def prediect(adata, model_weight_path, project, mask_path,
                     new = sc.AnnData(att, obs=meta, var = varinfo)
                 adata_list.append(new)
     
-    new = ad.concat(adata_list)
-    new.obs.index = adata.obs.index
-    new.obs['Prediction'] = new.obs['Prediction'].map(dic)
-    new.obs[adata.obs.columns] = adata.obs[adata.obs.columns].values
-    return new
+    new_adata = ad.concat(adata_list)
+    new_adata.obs.index = adata.obs.index
+    new_adata.obs['Prediction'] = new_adata.obs['Prediction'].map(dic)
+    new_adata.obs[adata.obs.columns] = adata.obs[adata.obs.columns].values
+    return new_adata
