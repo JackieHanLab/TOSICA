@@ -4,6 +4,7 @@ z.*
 /z?.*
 zlog
 *.pth
+config/bk
 
 ### Python ###
 # Byte-compiled / optimized / DLL files

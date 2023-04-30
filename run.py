@@ -1,6 +1,6 @@
 import scanpy as sc
 import numpy as np
-import warnings 
+import warnings
 warnings.filterwarnings ("ignore")
 import re, random
 from pathlib import Path
@@ -9,7 +9,7 @@ import pandas as pd
 from pandas import DataFrame
 import os, sys
 import torch
-import TOSICA 
+import TOSICA
 from utils.log_util import logger
 from utils.arg_util import ArgparseUtil
 from utils.file_util import FileUtil
@@ -23,7 +23,15 @@ def read_train_config():
             best_epoch = configs['best_epoch']
             model_dir_name = file.stem
             model_weight_path = f'model_files/{model_dir_name}/model-{best_epoch}.pth'
+            logger.info('trained model_weight_path %s', model_weight_path)
             return model_weight_path
+
+
+def calc_accuracy(new_adata):
+    """  """
+    pass
+    
+
 
 args = ArgparseUtil().classifier()
 data_type = args.data_type
@@ -33,10 +41,9 @@ data_file = data_dir / 'demo_train.h5ad'
 ref_adata = sc.read(data_dir / 'demo_train.h5ad')
 ref_adata = ref_adata[:, ref_adata.var_names]
 query_adata = sc.read(data_dir / 'demo_test.h5ad')
-query_adata = query_adata[:,ref_adata.var_names]
+query_adata = query_adata[:, ref_adata.var_names]
 
-train = 1
-if train:
+if args.enable_train:
     TOSICA.train(
         ref_adata, gmt_path='human_gobp', data_type=data_type, label_name='Celltype',
         epochs=args.n_epoch, project='hGOBP_demo',

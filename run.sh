@@ -1,7 +1,7 @@
 data_type=hPancreas
 seed=10
 n_epoch=30
-enable_train=1
+enable_train=0
 nohup python run.py \
 --data_type $data_type \
 --seed $seed \

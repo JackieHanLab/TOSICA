@@ -12,7 +12,10 @@
     "num_heads": 4,
     "lr": 0.001,
     "epochs": 30,
-    "seed": 3,
-    "best_epoch": 11,
-    "lrf": 0.01
+    "seed": 0,
+    "lrf": 0.01,
+    "least_val_loss": 0.0195156392002605,
+    "best_epoch": 13,
+    "val_acc_at_least_val_loss": 0.9974640052356021,
+    "train_acc_at_least_val_loss": 0.9983880011213905
 }
