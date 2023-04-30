@@ -64,18 +64,14 @@ def balance_populations(data):
     balanced_data = np.empty(shape=(1, data.shape[1]), dtype=np.float32)
     for ct in ct_names:
         tmp = data[data_label == ct]
-        logger.info('ct %s tmp[:5]\n%s', ct, tmp[:5])
         orig_num = len(tmp)
-        logger.info('orig_num %s', orig_num)
         if orig_num >= max_val:
             idx = np.random.choice(range(orig_num), max_val, replace=False)
-            logger.info('idx[:5] %s', idx[:5])
         else:
             random_num = max_val - orig_num
             random_idx = np.random.choice(range(orig_num), random_num)
             basic_index = np.array(range(orig_num))
             idx = np.r_[random_idx, basic_index]
-            logger.info('idx[:5] %s', idx[:5])
         tmp_X = tmp[idx]
         # the same as np.concatenate([balanced_data,tmp_X])
         balanced_data = np.r_[balanced_data, tmp_X]
@@ -233,7 +229,8 @@ def evaluate(model, data_loader, device, epoch):
     accu_num = torch.zeros(1).to(device)
     accu_loss = torch.zeros(1).to(device)
     sample_num = 0
-    data_loader = tqdm(data_loader)
+    # data_loader = tqdm(data_loader)  # need tqdm for evaluation.
+    # We just need a metric on the whole dataloader during evaluation.
     for step, data in enumerate(data_loader):
         exp, labels = data
         labels = labels.to(device)
@@ -243,9 +240,7 @@ def evaluate(model, data_loader, device, epoch):
         accu_num += torch.eq(pred_classes, labels).sum()
         loss = loss_function(pred, labels)
         accu_loss += loss
-        # data_loader.desc = "[valid epoch {}] loss: {:.3f}, acc: {:.3f}".format(epoch,
-        #                                                                        accu_loss.item() / (step + 1),
-        #                                                                        accu_num.item() / sample_num)
+        
     return accu_loss.item() / (step + 1), accu_num.item() / sample_num
 
 def fit_model(
@@ -320,11 +315,11 @@ def fit_model(
     train_loader = torch.utils.data.DataLoader(train_dataset,
                                                batch_size=batch_size,
                                                shuffle=True,
-                                               pin_memory=True, drop_last=True)
+                                               pin_memory=True, drop_last=False)
     valid_loader = torch.utils.data.DataLoader(valid_dataset,
                                              batch_size=batch_size,
                                              shuffle=False,
-                                             pin_memory=True, drop_last=True)
+                                             pin_memory=True, drop_last=False)
     model = create_model(
         num_classes=num_classes, num_genes=len(genes), mask=mask, embed_dim=embed_dim,
         depth=depth, num_heads=num_heads, has_logits=False).to(device)
