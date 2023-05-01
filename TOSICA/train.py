@@ -77,7 +77,7 @@ def balance_populations(data):
         balanced_data = np.r_[balanced_data, tmp_X]
     return np.delete(balanced_data, 0, axis=0)
 
-def splitDataSet(adata, label_name='Celltype', tr_ratio=0.7, data_seed=0):
+def splitDataSet(adata, label_name='Celltype', data_seed=0, test_size=0.3):
     """
     Split data set into training set and test set.
     """
@@ -99,7 +99,7 @@ def splitDataSet(adata, label_name='Celltype', tr_ratio=0.7, data_seed=0):
     logger.info('After balance_populations el_data[:5]\n%s', el_data[:5])
     logger.info('After balance_populations, train+valid shape %s', el_data.shape)
     n_genes = len(el_data[1])-1
-    train_dataset, valid_dataset = train_test_split(el_data, test_size=1-tr_ratio, random_state=data_seed)
+    train_dataset, valid_dataset = train_test_split(el_data, test_size=test_size, random_state=data_seed)
     exp_train = torch.from_numpy(train_dataset[:,:n_genes].astype(np.float32))
     label_train = torch.from_numpy(train_dataset[:,-1].astype(np.int64))
     exp_valid = torch.from_numpy(valid_dataset[:,:n_genes].astype(np.float32))

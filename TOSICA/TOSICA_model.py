@@ -130,17 +130,17 @@ def get_weight(att_mat):
     """ Returned tensor shape is batch-size, seq-len(num_patches). """
     # att_mat[0].shape: [8, 4, 301, 301], [batch size, head num, seq-len(num_patches+1), seq-len]
     # torch.stack(att_mat).shape: [2, 8, 4, 301, 301], as depth is 2.
-    # the squeeze(1) is not use.
-    att_mat = torch.stack(att_mat).squeeze(1)
+    att_mat = torch.stack(att_mat)
     # Average the attention weights across all heads, shape: [2, 8, 301, 301]
     att_mat = torch.mean(att_mat, dim=2)
     # To account for residual connections, we add an identity matrix to the
     # attention matrix and re-normalize the weights.
     residual_att = torch.eye(att_mat.size(3), device=att_mat.device)
+    # logger.info('%s', att_mat.shape)
     aug_att_mat = att_mat + residual_att
     aug_att_mat = aug_att_mat / aug_att_mat.sum(dim=-1).unsqueeze(-1)
     # Recursively multiply the weight matrices
-    # aug_att_mat.shape [2, 8, 301, 301]
+    # aug_att_mat.shape [2, 8, 301, 301] depth, batch-size, seq-len, seq-len
     joint_attentions = torch.zeros(aug_att_mat.size(), device=att_mat.device)
     joint_attentions[0] = aug_att_mat[0]
 
