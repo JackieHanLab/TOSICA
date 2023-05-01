@@ -32,14 +32,14 @@ def read_train_config():
 args = ArgparseUtil().train_classifier()
 data_type = args.data_type
 project_path = args.project
-ref_data, query_adata = read_train_test_data(data_type)
+ref_adata, query_adata = read_train_test_data(data_type)
 project_dir = Path(f'projects/{project_path}')
 project_dir.mkdir(exist_ok=1, parents=1)
 
 
 if args.enable_train:
     TOSICA.train(
-        ref_data, gmt_path=args.gmt_path, data_type=data_type, project_path=project_dir,
+        ref_adata, gmt_path=args.gmt_path, data_type=data_type, project_path=project_dir,
         label_name=args.label_name,
         epochs=args.n_epoch,
         lr=args.learning_rate,
