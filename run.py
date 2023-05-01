@@ -13,7 +13,8 @@ import TOSICA
 from utils.log_util import logger
 from utils.arg_util import ArgparseUtil
 from utils.file_util import FileUtil
-from app.projects.postprocess.calc_performance_on_query import calc_accuracy
+from app.postprocess.calc_performance_on_query import calc_accuracy
+from app.data_preprocess.orig_train_test_data_reader import read_train_test_data
 
 
 def read_train_config():
@@ -28,32 +29,29 @@ def read_train_config():
             return model_weight_path
 
 
-args = ArgparseUtil().classifier()
+args = ArgparseUtil().train_classifier()
 data_type = args.data_type
-root_data_dir = Path('data')
-data_dir = root_data_dir / data_type
-project = 'hGOBP_demo'
-label_name = 'Celltype'
-ref_adata = sc.read(data_dir / 'demo_train.h5ad')
-ref_adata = ref_adata[:, ref_adata.var_names]
-query_adata = sc.read(data_dir / 'demo_test.h5ad')
-query_adata = query_adata[:, query_adata.var_names]
+project_path = args.project
+ref_data, query_adata = read_train_test_data(data_type)
+project_dir = Path(f'projects/{project_path}')
+project_dir.mkdir(exist_ok=1, parents=1)
+
 
 if args.enable_train:
     TOSICA.train(
-        ref_adata, gmt_path='human_gobp', data_type=data_type, label_name=label_name,
-        epochs=args.n_epoch, project=project,
+        ref_data, gmt_path=args.gmt_path, data_type=data_type, project_path=project_dir,
+        label_name=args.label_name,
+        epochs=args.n_epoch,
+        lr=args.learning_rate,
         data_seed=args.data_seed,
         seed=args.seed)
 else:
-    read_cached_prediction = 1
-    Path(f'cache/{project}').mkdir(exist_ok=1, parents=1)
-    cached_prediction_file = Path(f'cache/{project}/prediction_file.h5ad')
-    if read_cached_prediction and cached_prediction_file.is_file():
+    cached_prediction_file = project_dir / 'predicted_result.h5ad'
+    if args.read_cached_prediction and cached_prediction_file.is_file():
         new_adata = sc.read(cached_prediction_file)
-        logger.info('Loads cached_prediction_file')
+        logger.info(f'Loads predicted_result from {cached_prediction_file}')
     else:
         model_weight_path = read_train_config()
-        new_adata = TOSICA.pre(query_adata, model_weight_path=model_weight_path, project=project)
+        new_adata = TOSICA.pre(query_adata, model_weight_path=model_weight_path, project_path=project_dir)
         new_adata.write(cached_prediction_file)
-    calc_accuracy(project, query_adata, new_adata)
+    calc_accuracy(project_dir, query_adata, new_adata)

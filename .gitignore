@@ -4,8 +4,10 @@ z.*
 /z?.*
 zlog
 *.pth
+*.h5ad
 config/bk
 cache
+gene2token_weights.csv
 
 ### Python ###
 # Byte-compiled / optimized / DLL files

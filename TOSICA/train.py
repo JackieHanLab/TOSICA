@@ -244,8 +244,8 @@ def evaluate(model, data_loader, device, epoch):
     return accu_loss.item() / (step + 1), accu_num.item() / sample_num
 
 def fit_model(
-    adata, gmt_path, data_type,
-    project=None, pre_weights='', label_name='Celltype', max_g=300, max_gs=300,
+    adata, gmt_path, data_type, project_path:Path, 
+    pre_weights='', label_name='Celltype', max_g=300, max_gs=300,
     mask_ratio=0.015,
     n_unannotated=1,
     batch_size=6,
@@ -267,10 +267,7 @@ def fit_model(
     logger.info(device)
     today = datetime.today().strftime('%y%m%d')
     #train_weights = os.getcwd()+"/weights%s"%today
-    project = project or gmt_path.replace('.gmt','')+'_%s'%today
-    project_path = os.getcwd()+'/%s'%project
-    if os.path.exists(project_path) is False:
-        os.makedirs(project_path)
+    project_path = str(project_path)
     logger.info('project_path %s', project_path)
     tb_writer = SummaryWriter()
     exp_train, label_train, exp_valid, label_valid, inverse, genes = splitDataSet(adata, label_name, data_seed)
@@ -376,9 +373,10 @@ def fit_model(
     
     train_config_file = f'config/{data_type}-{today}-seed{seed}.json'
     save_train_configs(
-        train_config_file, project=project, pre_weights=pre_weights, label_name=label_name,
+        train_config_file, project_path=project_path, pre_weights=pre_weights, label_name=label_name,
         max_g=max_g, max_gs=max_gs, mask_ratio=mask_ratio, n_unannotated=n_unannotated, batch_size=batch_size,
         embed_dim=embed_dim, depth=depth, num_heads=num_heads,lr=lr, epochs= epochs, seed=seed, lrf=lrf,
+        data_seed=data_seed,
         least_val_loss=least_val_loss,
         best_epoch=best_epoch,
         val_acc_at_least_val_loss=val_acc_at_least_val_loss,

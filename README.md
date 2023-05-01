@@ -8,30 +8,16 @@ We created the python package called `TOSICA` that uses `scanpy` ans `torch` to 
 
 ### Requirements
 
-+ Linux/UNIX/Windows system
-+ Python >= 3.8
-+ torch >= 1.7.1
++ Linux system
++ Python 3.9
++ torch 1.12.1
 
 ### Create environment
 
-```
-conda create -n TOSICA python=3.8 scanpy
+```bash
+conda create -n TOSICA python=3.9 scanpy
 conda activate TOSICA
-conda install pytorch=1.7.1 torchvision=0.8.2 torchaudio=0.7.2 cudatoolkit=10.1 -c pytorch
-```
-
-### Installation
-
-The `TOSICA` python package is in the folder TOSICA. You can simply install it from the root of this repository using
-
-```
-pip install .
-```
-
-Alternatively, you can also install the package directly from GitHub via
-
-```
-pip install git+https://github.com/JackieHanLab/TOSICA.git
+conda install pytorch==1.12.1 torchvision==0.13.1 torchaudio==0.12.1 cudatoolkit=11.6 -c pytorch -c conda-forge
 ```
 
 ### Environment has been tested
@@ -42,18 +28,18 @@ pip install git+https://github.com/JackieHanLab/TOSICA.git
 
 ### Step 1: Training the model
 
-```py
-TOSICA.train(ref_adata, gmt_path,project=<my_project>,label_name=<label_key>)
+```bash
+run.sh
 ```
 
-#### Input:
+#### Input
 
-+ `ref_adata`: an `AnnData` object of reference dataset.
++ `data_type`: each data_type links to relative ref_adata and query_adata(that's train/test data).
 + `gmt_path` : default pre-prepared mask or path to .gmt files.
 + `<my_project>`: the model will be saved in a folder named <my_project>. Default: `<gmt_path>_20xxxxxx`.
 + `<label_key>`: the name of the label column in `ref_adata.obs`.
 
-#### Pre-prepared mask:
+#### Pre-prepared mask
 
 + `human_gobp` : GO_bp.gmt
 + `human_immune` : immune.gmt
@@ -63,12 +49,17 @@ TOSICA.train(ref_adata, gmt_path,project=<my_project>,label_name=<label_key>)
 + `mouse_reactome` : m_reactome.gmt
 + `mouse_tf` : m_TF.gmt
 
-#### Output:
+#### Output
 
-+ `./my_project/mask.npy` : Mask matrix
-+ `./my_project/pathway.csv` : Gene set list
-+ `./my_project/label_dictionary.csv` : Label list
-+ `./my_project/model-n.pth` : Weights
+config files
+
++ `./app/projects/my_project/mask.npy` : Mask matrix
++ `./app/projects/my_project/pathway.csv` : Gene set list
++ `./app/projects/my_project/label_dictionary.csv` : Label list
+
+saved model files
+
++ `./model_files/data_type/model-n.pth` : Weights
 
 ### Step 2: Prediect by the model
 
@@ -99,7 +90,7 @@ new_adata = TOSICA.pre(query_adata, model_weight_path = <path to optional weight
 
 ### Example Demo:
 
-[Guided Tutorial](test/tutorial.ipynb)
+[Guided Tutorial](tutorial.ipynb)
 
 ### Cite TOSICA:
 

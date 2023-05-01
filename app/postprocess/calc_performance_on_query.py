@@ -12,9 +12,9 @@ UNKNOWN = 'Unknown'
 # label_name = 'Celltype'
 
 
-def calc_accuracy(project, query_adata, new_adata):
+def calc_accuracy(project_path, query_adata, new_adata):
     """  """
-    dictionary = pd.read_table(project+'/label_dictionary.csv', sep=',', header=0, index_col=0)
+    dictionary = pd.read_table(project_path / 'label_dictionary.csv', sep=',', header=0, index_col=0)
     logger.info('%s', dictionary.shape)
     train_types = dictionary.iloc[:, 0].values.tolist()
     train_types.append(UNKNOWN)
