@@ -32,6 +32,10 @@ class ArgparseUtil(object):
         self.parser.add_argument("--read_cached_prediction", type=int, default=1, help="0 is false, overwite; 1 true")
         self.parser.add_argument("--n_epoch", type=int, default=30, help="")
         self.parser.add_argument("--learning_rate", type=float, default=0.001, help="")
+        self.parser.add_argument("--depth", type=int, default=1, help="")
+        self.parser.add_argument("--embed_dim", type=int, default=48, help="")
+        self.parser.add_argument("--num_heads", type=int, default=4, help="")
+        self.parser.add_argument("--batch_size", type=int, default=8, help="")
         args = self.parser.parse_args()
         return args
 

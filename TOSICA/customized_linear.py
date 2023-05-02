@@ -8,7 +8,6 @@ This code base on https://pytorch.org/docs/stable/notes/extending.html
 import math
 import torch
 import torch.nn as nn
-from utils.log_util import logger
 
 
 class CustomizedLinearFunction(torch.autograd.Function):

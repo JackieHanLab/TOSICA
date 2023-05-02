@@ -14,8 +14,8 @@ name = "TOSICA"
 
 def train(
     adata, gmt_path, data_type, project_path, pre_weights='', label_name='Celltype',
-    max_g=300, max_gs=300, mask_ratio =0.015, n_unannotated = 1,
-    batch_size=8, embed_dim=48, depth=1, num_heads=4, lr=0.001, epochs= 10, seed=3, data_seed=0, lrf=0.01):
+    max_g=300, max_gs=300, mask_ratio=0.015, n_unannotated=1,
+    batch_size=8, embed_dim=48, depth=2, num_heads=4, lr=0.001, epochs=10, seed=3, data_seed=0, lrf=0.01):
     r"""
     Fit the model with reference data
     Parameters

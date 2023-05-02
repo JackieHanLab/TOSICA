@@ -11,7 +11,7 @@ import os, sys
 import torch
 import TOSICA
 from utils.log_util import logger
-from utils.arg_util import ArgparseUtil
+from utils.arg_util import ArgparseUtil, log_args
 from utils.file_util import FileUtil
 from app.postprocess.calc_performance_on_query import calc_accuracy
 from app.data_preprocess.orig_train_test_data_reader import read_train_test_data
@@ -36,7 +36,7 @@ project_path = args.project
 ref_adata, query_adata = read_train_test_data(data_type)
 project_dir = Path(f'projects/{project_path}')
 project_dir.mkdir(exist_ok=1, parents=1)
-
+log_args(args, logger)
 
 if args.enable_train:
     TOSICA.train(
@@ -44,6 +44,10 @@ if args.enable_train:
         label_name=args.label_name,
         epochs=args.n_epoch,
         lr=args.learning_rate,
+        embed_dim=args.embed_dim,
+        depth=args.depth,
+        num_heads=args.num_heads,
+        batch_size=args.batch_size,
         data_seed=args.data_seed,
         seed=args.seed)
 else:

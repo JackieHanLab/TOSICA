@@ -77,7 +77,7 @@ def balance_populations(data):
         balanced_data = np.r_[balanced_data, tmp_X]
     return np.delete(balanced_data, 0, axis=0)
 
-def splitDataSet(adata, label_name='Celltype', data_seed=0, test_size=0.3):
+def splitDataSet(adata, label_name='Celltype', data_seed=0, test_size=0.2):
     """
     Split data set into training set and test set.
     """
@@ -211,7 +211,7 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch):
         loss = loss_function(pred, labels)
         loss.backward()
         accu_loss += loss.detach()
-        data_loader.desc = "[train epoch {}] loss: {:.3f}, acc: {:.3f}".format(epoch,
+        data_loader.desc = "[train epoch {}] loss: {:.4f}, acc: {:.4f}".format(epoch,
                                                                                accu_loss.item() / (step + 1),
                                                                                accu_num.item() / sample_num)
         if not torch.isfinite(loss):

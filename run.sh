@@ -1,8 +1,8 @@
 data_type=hPancreas
-seed=5
+seed=13
 n_epoch=30
 learning_rate=0.001
-enable_train=0
+enable_train=1
 nohup python run.py \
 --data_type $data_type \
 --seed $seed \
@@ -13,4 +13,8 @@ nohup python run.py \
 --read_cached_prediction 0 \
 --gmt_path human_gobp \
 --project hGOBP_demo \
+--depth 1 \
+--embed_dim 48 \
+--num_heads 4 \
+--batch_size 8 \
 > zlog/train$enable_train-$data_type-e$n_epoch-s$seed.log  2>&1 &

@@ -29,7 +29,6 @@ def read_train_test_data(data_type, verbose=True):
 
     if verbose:
         logger.info('ref_adata.var_names %s', ref_adata.var_names)
-        logger.info('query_adata.var_names %s', query_adata.var_names)
         logger.info('ref_adata %s', ref_adata)
         logger.info('query_adata %s', query_adata)
     return ref_adata, query_adata
