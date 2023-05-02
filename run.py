@@ -17,8 +17,9 @@ from app.postprocess.calc_performance_on_query import calc_accuracy
 from app.data_preprocess.orig_train_test_data_reader import read_train_test_data
 
 
-def read_train_config():
+def read_train_config(data_type):
     """  """
+    logger.info('data_type %s', data_type)
     for file in Path('config').iterdir():
         if file.stem.startswith(data_type):
             configs = FileUtil.read_json(file)
@@ -51,7 +52,7 @@ else:
         new_adata = sc.read(cached_prediction_file)
         logger.info(f'Loads predicted_result from {cached_prediction_file}')
     else:
-        model_weight_path = read_train_config()
+        model_weight_path = read_train_config(data_type)
         new_adata = TOSICA.pre(query_adata, model_weight_path=model_weight_path, project_path=project_dir)
         new_adata.write(cached_prediction_file)
     calc_accuracy(project_dir, query_adata, new_adata)

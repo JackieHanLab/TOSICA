@@ -1,12 +1,10 @@
-04-17 07:36:15 hPancreas.py 22: ref_adata.var_names[:5] Index(['COL1A1', 'COL1A2', 'PPY', 'CTRB1', 'CELA3A'], dtype='object')
-04-17 07:36:15 hPancreas.py 23: ref_adata.obs_names[:5] Index(['human1_lib1.final_cell_0001', 'human1_lib1.final_cell_0003',
+23-05-02 11:22 hPancreas.py 26: ref_data.var_names[:5] Index(['COL1A1', 'COL1A2', 'PPY', 'CTRB1', 'CELA3A'], dtype='object')
+23-05-02 11:22 hPancreas.py 27: ref_data.obs_names[:5] Index(['human1_lib1.final_cell_0001', 'human1_lib1.final_cell_0003',
        'human1_lib1.final_cell_0004', 'human1_lib1.final_cell_0005',
        'human1_lib1.final_cell_0006'],
       dtype='object')
-04-17 07:36:15 hPancreas.py 26: ref_adata View of AnnData object with n_obs × n_vars = 10600 × 3000
-    obs: 'Celltype'
-    var: 'Gene Symbol'
-04-17 07:36:15 hPancreas.py 27: ref_adata.obs.Celltype.value_counts() alpha          3136
+23-05-02 11:22 hPancreas.py 29: ref_data.obs.Celltype.value_counts() Celltype
+alpha          3136
 beta           2966
 ductal         1290
 acinar         1144
@@ -19,17 +17,15 @@ mast             25
 epsilon          21
 schwann          13
 t_cell            7
-Name: Celltype, dtype: int64
-04-17 07:36:15 hPancreas.py 29: *** show a short snippet of data
-04-17 07:36:15 hPancreas.py 31: View of AnnData object with n_obs × n_vars = 2 × 4
+Name: count, dtype: int64
+23-05-02 11:22 hPancreas.py 31: *** show a short snippet of data
+23-05-02 11:22 hPancreas.py 33: View of AnnData object with n_obs × n_vars = 2 × 4
     obs: 'Celltype'
     var: 'Gene Symbol'
-04-17 07:36:15 hPancreas.py 33: [[0.0, 0.0, 1.0241609811782837, 5.755773067474365], [0.0, 0.0, 0.7810583114624023, 6.0262041091918945]]
-04-17 07:36:15 hPancreas.py 35: *** query_adata
-04-17 07:36:15 hPancreas.py 38: View of AnnData object with n_obs × n_vars = 4218 × 3000
-    obs: 'Celltype'
-    var: 'Gene Symbol'
-04-17 07:36:15 hPancreas.py 39: alpha           2011
+23-05-02 11:22 hPancreas.py 35: [[0.0, 0.0, 1.0241609811782837, 5.755773067474365], [0.0, 0.0, 0.7810583114624023, 6.0262041091918945]]
+23-05-02 11:22 hPancreas.py 43: *** query_adata
+23-05-02 11:22 hPancreas.py 44: Celltype
+alpha           2011
 beta            1006
 ductal           414
 PP               282
@@ -40,8 +36,8 @@ endothelial       16
 epsilon            7
 mast               7
 MHC class II       5
-Name: Celltype, dtype: int64
-04-17 07:36:15 hPancreas.py 40: COL1A1        COL1A1
+Name: count, dtype: int64
+23-05-02 11:22 hPancreas.py 45: COL1A1        COL1A1
 COL1A2        COL1A2
 PPY              PPY
 CTRB1          CTRB1

@@ -37,8 +37,9 @@ def calc_accuracy(project_path, query_adata, new_adata):
     logger.info('new_adata.obs.columns() %s', new_adata.obs.columns.tolist())
     pred_labels = new_adata.obs['Prediction'].to_numpy()
     logger.info('pred_labels[:5] %s', pred_labels[:5])
+    total_count = len(pred_labels)
 
     correct_count = sum(orig_true_labels == pred_labels)
     accuracy = correct_count / len(pred_labels)
-    logger.info('correct_count %s accuracy %s', correct_count, accuracy)
+    logger.info('total_count %s, correct_count %s accuracy %s', total_count, correct_count, accuracy)
     
