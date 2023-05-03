@@ -1,14 +1,7 @@
 import scanpy as sc
-import numpy as np
 import warnings
 warnings.filterwarnings ("ignore")
-import re, random
 from pathlib import Path
-import json
-import pandas as pd
-from pandas import DataFrame
-import os, sys
-import torch
 import TOSICA
 from utils.log_util import logger
 from utils.arg_util import ArgparseUtil, log_args

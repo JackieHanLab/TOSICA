@@ -1,5 +1,6 @@
 data_type=hPancreas
-seed=13
+[ -d zlog/$data_type ] || mkdir -p zlog/$data_type
+seed=16
 n_epoch=30
 learning_rate=0.001
 enable_train=0
@@ -16,5 +17,5 @@ nohup python run.py \
 --depth 1 \
 --embed_dim 48 \
 --num_heads 4 \
---batch_size 8 \
-> zlog/train$enable_train-$data_type-e$n_epoch-s$seed.log  2>&1 &
+--batch_size 32 \
+> zlog/$data_type/train$enable_train-$data_type-e$n_epoch-s$seed.log  2>&1 &

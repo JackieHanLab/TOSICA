@@ -379,11 +379,13 @@ def fit_model(
         max_g=max_g, max_gs=max_gs, mask_ratio=mask_ratio, n_unannotated=n_unannotated, batch_size=batch_size,
         embed_dim=embed_dim, depth=depth, num_heads=num_heads,lr=lr, epochs= epochs, seed=seed, lrf=lrf,
         data_seed=data_seed,
+        val_data_ratio=val_data_ratio,
         least_val_loss=least_val_loss,
         best_epoch=best_epoch,
         val_acc_at_least_val_loss=val_acc_at_least_val_loss,
         train_acc_at_least_val_loss=train_acc_at_least_val_loss,
         )
+    keep_top_saved_models(model_path)
     logger.info('Training finished!')
 
 
@@ -391,3 +393,11 @@ def save_train_configs(train_config_file, **kw):
     """  """
     with open(train_config_file, 'w', encoding='utf-8') as f:
         json.dump(kw, f, ensure_ascii=False, indent=4)
+
+
+def keep_top_saved_models(model_path, top_k=3):
+    """  """
+    model_path = Path(model_path)
+    files = sorted(model_path.glob('*.pth'), key=lambda x: int(x.stem.split('-')[-1]), reverse=True)
+    for file in files[top_k: ]:
+        file.unlink()
