@@ -80,10 +80,10 @@ def splitDataSet(adata,label_name='Celltype', tr_ratio= 0.7):
     n_genes = len(el_data[1])-1
     train_size = int(len(el_data) * tr_ratio)
     train_dataset, valid_dataset = torch.utils.data.random_split(el_data, [train_size,len(el_data)-train_size])
-    exp_train = torch.from_numpy(train_dataset.dataset[:,:n_genes].astype(np.float32))
-    label_train = torch.from_numpy(train_dataset.dataset[:,-1].astype(np.int64))
-    exp_valid = torch.from_numpy(valid_dataset.dataset[:,:n_genes].astype(np.float32))
-    label_valid = torch.from_numpy(valid_dataset.dataset[:,-1].astype(np.int64))
+    exp_train = torch.from_numpy(train_dataset[:,:n_genes].astype(np.float32))
+    label_train = torch.from_numpy(train_dataset[:,-1].astype(np.int64))
+    exp_valid = torch.from_numpy(valid_dataset[:,:n_genes].astype(np.float32))
+    label_valid = torch.from_numpy(valid_dataset[:,-1].astype(np.int64))
     return exp_train, label_train, exp_valid, label_valid, inverse,genes
 
 def get_gmt(gmt):
@@ -305,5 +305,3 @@ def fit_model(adata, gmt_path, project = None, pre_weights='', label_name='Cellt
     print('Training finished!')
 
 #train(adata, gmt_path, pre_weights, batch_size=8, epochs=20)
-
-
