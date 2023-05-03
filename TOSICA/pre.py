@@ -9,17 +9,11 @@ import anndata as ad
 from .TOSICA_model import scTrans_model as create_model
 from utils.log_util import logger
 from torch.utils.data import DataLoader
-
+from TOSICA.train import todense
 
 #model_weight_path = "./weights20220429/model-5.pth"
 #mask_path = os.getcwd()+'/mask.npy'
 
-def todense(adata):
-    import scipy
-    if isinstance(adata.X, scipy.sparse.csr_matrix):
-        return adata.X.todense()
-    else:
-        return adata.X
 
 def get_weight(att_mat,pathway):
     att_mat = torch.stack(att_mat).squeeze(1)
