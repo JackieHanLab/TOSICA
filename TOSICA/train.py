@@ -256,7 +256,8 @@ def fit_model(
     epochs=10,
     seed=0,
     data_seed=0,
-    lrf=0.01
+    lrf=0.01,
+    val_data_ratio=0.2
 ):
     set_seed(seed)
     logger.info('seed %s', seed)
@@ -270,7 +271,8 @@ def fit_model(
     project_path = str(project_path)
     logger.info('project_path %s', project_path)
     tb_writer = SummaryWriter()
-    exp_train, label_train, exp_valid, label_valid, inverse, genes = splitDataSet(adata, label_name, data_seed)
+    exp_train, label_train, exp_valid, label_valid, inverse, genes = splitDataSet(
+        adata, label_name, data_seed, val_data_ratio)
     if gmt_path is None:
         mask = np.random.binomial(1, mask_ratio, size=(len(genes), max_gs))
         pathways = list()

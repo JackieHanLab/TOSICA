@@ -29,6 +29,7 @@ class ArgparseUtil(object):
         """ task args """
         self.parser.add_argument("--enable_train", type=int, default=1, help="0 is false, 1 is true")
         self.parser.add_argument("--data_seed", type=int, default=0, help="seed used to create mock data or split data")
+        self.parser.add_argument("--val_data_ratio", type=float, default=0.2, help="split train data as train and val")
         self.parser.add_argument("--read_cached_prediction", type=int, default=1, help="0 is false, overwite; 1 true")
         self.parser.add_argument("--n_epoch", type=int, default=30, help="")
         self.parser.add_argument("--learning_rate", type=float, default=0.001, help="")
