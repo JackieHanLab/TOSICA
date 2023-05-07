@@ -10,7 +10,7 @@ We created the python package called `TOSICA` that uses `scanpy` ans `torch` to 
 
 + Linux/UNIX/Windows system
 + Python >= 3.8
-+ torch >= 1.7.1
++ torch == 1.7.1
 
 ### Create environment
 
