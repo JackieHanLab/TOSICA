@@ -18,4 +18,5 @@ nohup python run.py \
 --embed_dim 48 \
 --num_heads 4 \
 --batch_size 32 \
-> zlog/$data_type/train$enable_train-$data_type-e$n_epoch-s$seed.log  2>&1 &
+> train$enable_train-$data_type-e$n_epoch-s$seed.log  2>&1 &
+# > zlog/$data_type/train$enable_train-$data_type-e$n_epoch-s$seed.log  2>&1 &

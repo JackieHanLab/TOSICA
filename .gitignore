@@ -8,7 +8,7 @@ zlog
 config/bk
 cache
 gene2token_weights.csv
-
+/*.log
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
