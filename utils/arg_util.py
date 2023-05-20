@@ -24,6 +24,7 @@ class ArgparseUtil(object):
         self.parser.add_argument("--project", default='hGOBP_demo', type=str)
         self.parser.add_argument("--gmt_path", default='human_gobp', type=str)
         self.parser.add_argument("--save_model_per_epoch", type=int, default=1, help="0 is false, 1 is true")
+        # self.parser.add_argument("--ignore_gpu", type=int, default=0, help="0 is false, 1 is true")
 
     def train_classifier(self):
         """ task args """

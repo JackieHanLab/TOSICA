@@ -257,15 +257,19 @@ def fit_model(
     seed=0,
     data_seed=0,
     lrf=0.01,
+    ignore_gpu=False,
     val_data_ratio=0.2
 ):
     set_seed(seed)
     logger.info('seed %s', seed)
     # np.random is used to create mock data or split data
     np.random.seed(data_seed)
-    device = 'cuda:0'
-    device = torch.device(device if torch.cuda.is_available() else "cpu")
-    logger.info(device)
+    if ignore_gpu:
+        device = 'cpu'
+    else:
+        device = 'cuda:0'
+        device = torch.device(device if torch.cuda.is_available() else "cpu")
+    logger.info(f'Uses device {device}')
     today = datetime.today().strftime('%y%m%d')
     #train_weights = os.getcwd()+"/weights%s"%today
     project_path = str(project_path)

@@ -16,7 +16,8 @@ def train(
     adata, gmt_path, data_type, project_path, pre_weights='', label_name='Celltype',
     max_g=300, max_gs=300, mask_ratio=0.015, n_unannotated=1,
     batch_size=8, embed_dim=48, depth=2, num_heads=4, lr=0.001, epochs=10, seed=3, data_seed=0, lrf=0.01,
-    val_data_ratio=0.2):
+    ignore_gpu=False,
+    val_data_ratio=0.2,):
     r"""
     Fit the model with reference data
     Parameters
@@ -67,7 +68,9 @@ def train(
     fit_model(adata, gmt_path, data_type, project_path=project_path, pre_weights=pre_weights, label_name=label_name,
               max_g=max_g, max_gs=max_gs, mask_ratio=mask_ratio, n_unannotated=n_unannotated, batch_size=batch_size,
               embed_dim=embed_dim, depth=depth, num_heads=num_heads, lr=lr, epochs= epochs, 
-              seed=seed, data_seed=data_seed, lrf=lrf, val_data_ratio=val_data_ratio)
+              seed=seed, data_seed=data_seed, lrf=lrf,
+              ignore_gpu=ignore_gpu,
+              val_data_ratio=val_data_ratio)
 
 
 def pre(adata, model_weight_path, project_path:Path,

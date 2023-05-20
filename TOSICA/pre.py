@@ -43,7 +43,7 @@ def prediect(adata, model_weight_path, project_path, mask_path,
              n_step=10000, cutoff=0.1, n_unannotated=1, 
              batch_size=50, embed_dim=48, depth=2, num_heads=4):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    logger.info(device)
+    logger.info(f'Uses device {device}')
     num_genes = adata.shape[1]
     #mask_path = os.getcwd()+project+'/mask.npy'
     mask = np.load(mask_path)

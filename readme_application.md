@@ -16,6 +16,9 @@ sh run.sh
 run.sh的参数之一，enable_train=0，即不训练，而只是推理预测。enable_train=1，训练。
 训练和测试文件，data/hPancreas/
 
+注意，不使用GPU而使用CPU的简易方式，run.sh里面export CUDA_VISIBLE_DEVICES=1， 大于等于GPU数量即可。比如GPU数量是1，这个值>=1，实际上禁用GPU。
+
+
 ## 建议步骤：
 1. 执行 tutorial.ipynb
 2. 理解 训练和测试文件，data/hPancreas/的格式
@@ -25,4 +28,6 @@ run.sh的参数之一，enable_train=0， 推理预测。
 5. 把自己的人类胰腺数据，能否修改data/hPancreas/的格式，再次运行预测
 用其他工具预测，对比效果
 6. 使用作者公开的其他数据集，训练和预测，验证
+sh run.sh
+run.sh的参数之一，enable_train=1， 训练。
 https://github.com/JackieHanLab/TOSICA/issues/9

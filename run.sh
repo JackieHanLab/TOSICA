@@ -1,6 +1,9 @@
+# Here, export CUDA_VISIBLE_DEVICES=1 is actually disable GPU as the valid value is 0, as there is only 1 GPU whose num starts from 0
+# To use GPU, export CUDA_VISIBLE_DEVICES=0
+export CUDA_VISIBLE_DEVICES=1
 data_type=hPancreas
 [ -d zlog/$data_type ] || mkdir -p zlog/$data_type
-seed=16
+seed=17
 n_epoch=30
 learning_rate=0.001
 enable_train=0
@@ -19,4 +22,3 @@ nohup python run.py \
 --num_heads 4 \
 --batch_size 32 \
 > train$enable_train-$data_type-e$n_epoch-s$seed.log  2>&1 &
-# > zlog/$data_type/train$enable_train-$data_type-e$n_epoch-s$seed.log  2>&1 &
