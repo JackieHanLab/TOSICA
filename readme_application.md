@@ -16,8 +16,10 @@ sh run.sh
 run.sh的参数之一，enable_train=0，即不训练，而只是推理预测。enable_train=1，训练。
 训练和测试文件，data/hPancreas/
 
-注意，不使用GPU而使用CPU的简易方式，run.sh里面export CUDA_VISIBLE_DEVICES=1， 大于等于GPU数量即可。比如GPU数量是1，这个值>=1，实际上禁用GPU。
-
+不使用GPU而使用CPU的简易方式，run.sh里面export CUDA_VISIBLE_DEVICES=1， 这个值大于等于GPU数量即可。比如GPU数量是1，这个值>=1，实际上禁用GPU。
+hPancreas数据集测试：GPU训练时间21分钟，CPU训练时间7小时5分钟。
+预测时间，由于预测数据集只有4200，无论GPU和CPU都是一分钟。
+这个模型是不大的模型结构，并且hPancreas训练数据很小，其实CPU虽然慢一点，也可接受。hPancreas是很小数据集，14.8K数据，如果大数据集 如mAltas, 356K, 训练用时大概7*25小时，恐怕时间太长了。
 
 ## 建议步骤：
 1. 执行 tutorial.ipynb

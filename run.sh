@@ -3,10 +3,10 @@
 export CUDA_VISIBLE_DEVICES=1
 data_type=hPancreas
 [ -d zlog/$data_type ] || mkdir -p zlog/$data_type
-seed=17
+seed=118
 n_epoch=30
 learning_rate=0.001
-enable_train=0
+enable_train=1
 nohup python run.py \
 --data_type $data_type \
 --seed $seed \

@@ -38,7 +38,6 @@ if args.enable_train:
         batch_size=args.batch_size,
         data_seed=args.data_seed,
         val_data_ratio=args.val_data_ratio,
-        ignore_gpu=args.ignore_gpu,
         seed=args.seed)
 else:
     cached_prediction_file = project_dir / 'predicted_result.h5ad'
