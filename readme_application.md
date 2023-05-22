@@ -11,6 +11,15 @@ sc.tl.pca(new_adata, svd_solver='arpack')
 sc.pp.neighbors(new_adata, n_neighbors=10, n_pcs=40)
 sc.tl.umap(new_adata)
 
+### 输入
+1. 测序结果数据
+2. pathway数据
+TOSICA/resources
+代码见，get_gmt() in TOSICA/train.py
+来自这个网站，https://www.gsea-msigdb.org/gsea/downloads.jsp，可以直接下载，即基因富集分析的基础数据。
+https://www.gsea-msigdb.org/gsea/msigdb/download_file.jsp?filePath=/msigdb/release/2023.1.Hs/msigdb_v2023.1.Hs.xml.zip
+3. 训练样本的样本分布不均衡，数量太少的样本，模型肯定学习和预测的效果不太好。
+
 ### 训练和预测
 sh run.sh
 run.sh的参数之一，enable_train=0，即不训练，而只是推理预测。enable_train=1，训练。
@@ -20,6 +29,9 @@ run.sh的参数之一，enable_train=0，即不训练，而只是推理预测。
 hPancreas数据集测试：GPU训练时间21分钟，CPU训练时间7小时5分钟。
 预测时间，由于预测数据集只有4200，无论GPU和CPU都是一分钟。
 这个模型是不大的模型结构，并且hPancreas训练数据很小，其实CPU虽然慢一点，也可接受。hPancreas是很小数据集，14.8K数据，如果大数据集 如mAltas, 356K, 训练用时大概7*25小时，恐怕时间太长了。
+
+### 预测注意
+1. 预测时候，如果未知类型，可能预测为unknown，也可能预测为训练集中的细胞类型。
 
 ## 建议步骤：
 1. 执行 tutorial.ipynb
