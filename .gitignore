@@ -1,0 +1,18 @@
+/data
+*.npy
+z.*
+/z?.*
+zlog
+*.pth
+*.h5ad
+config/bk
+cache
+gene2token_weights.csv
+/*.log
+### Python ###
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+events.out.*
