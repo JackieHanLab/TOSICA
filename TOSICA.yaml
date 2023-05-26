@@ -1,4 +1,4 @@
-name: tosica
+name: tosica2
 channels:
   - http://mirrors.aliyun.com/anaconda/cloud/pytorch
   - anaconda
