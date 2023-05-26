@@ -1,0 +1,22 @@
+{
+    "project_path": "projects/hGOBP_demo",
+    "pre_weights": "",
+    "label_name": "Celltype",
+    "max_g": 300,
+    "max_gs": 300,
+    "mask_ratio": 0.015,
+    "n_unannotated": 1,
+    "batch_size": 32,
+    "embed_dim": 48,
+    "depth": 1,
+    "num_heads": 4,
+    "lr": 0.001,
+    "epochs": 30,
+    "seed": 15,
+    "lrf": 0.01,
+    "data_seed": 0,
+    "least_val_loss": 0.01906006569955863,
+    "best_epoch": 18,
+    "val_acc_at_least_val_loss": 0.9968113809173412,
+    "train_acc_at_least_val_loss": 0.9977310357515178
+}

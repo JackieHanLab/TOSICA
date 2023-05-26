@@ -52,7 +52,7 @@ class CustomizedLinearFunction(torch.autograd.Function):
                 grad_weight = grad_weight * mask
         #if bias is not None and ctx.needs_input_grad[2]:
         if ctx.needs_input_grad[2]:
-            grad_bias = grad_output.sum(0).squeeze(0)
+            grad_bias = grad_output.sum(0)
 
         return grad_input, grad_weight, grad_bias, grad_mask
 
@@ -76,7 +76,6 @@ class CustomizedLinear(nn.Module):
             self.mask = mask.type(torch.float).t()
         else:
             self.mask = torch.tensor(mask, dtype=torch.float).t()
-
         self.mask = nn.Parameter(self.mask, requires_grad=False)
 
         # nn.Parameter is a special kind of Tensor, that will get
@@ -124,10 +123,7 @@ class CustomizedLinear(nn.Module):
         )
 
 
-
-
-
-if __name__ == 'check grad':
+if __name__ == '__main__':
     from torch.autograd import gradcheck
 
     # gradcheck takes a tuple of tensors as input, check if your gradient
@@ -137,7 +133,7 @@ if __name__ == 'check grad':
     customlinear = CustomizedLinearFunction.apply
 
     input = (
-            torch.randn(20,20,dtype=torch.double,requires_grad=True),
+            torch.randn(0,20,dtype=torch.double,requires_grad=True),
             torch.randn(30,20,dtype=torch.double,requires_grad=True),
             None,
             None,
