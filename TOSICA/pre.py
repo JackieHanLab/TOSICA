@@ -125,7 +125,7 @@ def prediect(adata,model_weight_path,project,mask_path,laten=False,save_att = 'X
                 else:
                     att = att[:,0:(len(pathway)-n_unannotated)]
                     att = att.astype('float32')
-                    varinfo = pd.DataFrame(pathway.iloc[0:len(pathway),0].values,index=pathway.iloc[0:len(pathway),0],columns=['pathway_index'])
+                    varinfo = pd.DataFrame(pathway.iloc[0:len(pathway)-n_unannotated,0].values,index=pathway.iloc[0:len(pathway)-n_unannotated,0],columns=['pathway_index'])
                     new = sc.AnnData(att, obs=meta, var = varinfo)
                 adata_list.append(new)
     print(all_line)
