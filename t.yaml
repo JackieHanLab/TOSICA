@@ -1,4 +1,4 @@
-name: test_tosica
+name: TOSICA
 channels:
   - pytorch
   - conda-forge
@@ -6,7 +6,7 @@ channels:
   - r
   - defaults
 dependencies:
-  - _libgcc_mutex=0.1=conda_forge
+  - _libgcc_mutex=0.1=conda_forget
   - _openmp_mutex=4.5=2_gnu
   - anndata=0.9.1=pyhd8ed1ab_0
   - blas=1.0=mkl
