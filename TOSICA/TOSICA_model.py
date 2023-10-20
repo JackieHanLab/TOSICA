@@ -3,7 +3,7 @@ from collections import OrderedDict
 import torch
 import torch.nn as nn
 import copy
-from .customized_linear import CustomizedLinear
+from .customized_linear import SparseLinear
 from einops import rearrange
 import random
 import numpy as np
@@ -32,9 +32,13 @@ class FeatureEmbed(nn.Module):
         self.num_genes = num_genes
         self.num_patches = mask.shape[1]
         self.embed_dim = embed_dim
-        mask = np.repeat(mask,embed_dim,axis=1)
-        self.mask = mask
-        self.fe = CustomizedLinear(self.mask)
+        # mask = np.repeat(mask, embed_dim, axis=1)
+        # self.mask = mask
+        # self.fe = CustomizedLinear(self.mask)
+
+        mask = np.repeat(mask,embed_dim,axis=1).T
+        indices = torch.tensor(np.array(np.where(mask != 0)))
+        self.fe = SparseLinear(in_features=mask.shape[1], out_features=mask.shape[0], indices=indices, bias=fe_bias)
         self.norm = norm_layer(embed_dim) if norm_layer else nn.Identity()
     def forward(self, x):
         num_cells = x.shape[0]
@@ -64,7 +68,7 @@ class Attention(nn.Module):
         q, k, v = qkv[0], qkv[1], qkv[2]
         attn = (q @ k.transpose(-2, -1)) * self.scale
         attn = attn.softmax(dim=-1)
-        weights = attn
+        weights = attn.detach()
         attn = self.attn_drop(attn)
         x = (attn @ v).transpose(1, 2).reshape(B, N, C)
         x = self.proj(x)
@@ -116,8 +120,7 @@ class Block(nn.Module):
         return x, weights
 
 def get_weight(att_mat):
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    att_mat = torch.stack(att_mat).squeeze(1)
+    att_mat = torch.stack(att_mat).cpu().squeeze(1)
     #print(att_mat.size())
     # Average the attention weights across all heads.
     att_mat = torch.mean(att_mat, dim=2)
@@ -125,11 +128,11 @@ def get_weight(att_mat):
     # To account for residual connections, we add an identity matrix to the
     # attention matrix and re-normalize the weights.
     residual_att = torch.eye(att_mat.size(3))
-    aug_att_mat = att_mat.to(device) + residual_att.to(device)
+    aug_att_mat = att_mat + residual_att
     aug_att_mat = aug_att_mat / aug_att_mat.sum(dim=-1).unsqueeze(-1)
     #print(aug_att_mat.size())
     # Recursively multiply the weight matrices
-    joint_attentions = torch.zeros(aug_att_mat.size()).to(device)
+    joint_attentions = torch.zeros(aug_att_mat.size())
     joint_attentions[0] = aug_att_mat[0]
     
     for n in range(1, aug_att_mat.size(0)):
@@ -223,13 +226,23 @@ class Transformer(nn.Module):
             tem, weights = layer_block(tem)
             attn_weights.append(weights)
         x = self.norm(tem)
-        attn_weights = get_weight(attn_weights)
-        if self.dist_token is None:
-            return self.pre_logits(x[:, 0]),attn_weights 
+
+        if self.training:
+            if self.dist_token is None:
+                return self.pre_logits(x[:, 0])
+            else:
+                return x[:, 0], x[:, 1]
         else:
-            return x[:, 0], x[:, 1],attn_weights
+            attn_weights = get_weight(attn_weights)
+            if self.dist_token is None:
+                return self.pre_logits(x[:, 0]),attn_weights
+            else:
+                return x[:, 0], x[:, 1],attn_weights
     def forward(self, x):
-        latent, attn_weights = self.forward_features(x)
+        if self.training:
+            latent = self.forward_features(x)
+        else:
+            latent, attn_weights = self.forward_features(x)
 
         if self.head_dist is not None: 
             latent, latent_dist = self.head(latent[0]), self.head_dist(latent[1])
@@ -238,8 +251,12 @@ class Transformer(nn.Module):
             else:
                 return (latent+latent_dist) / 2
         else:
-            pre = self.head(latent) 
-        return latent, pre, attn_weights
+            pre = self.head(latent)
+
+        if self.training:
+            return latent, pre
+        else:
+            return latent, pre, attn_weights
 
 def _init_vit_weights(m):
     """

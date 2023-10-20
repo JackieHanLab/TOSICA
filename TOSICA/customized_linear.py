@@ -5,9 +5,120 @@ From Uchida Takumi https://github.com/uchida-takumi/CustomizedLinear/blob/master
 extended torch.nn module which cusmize connection.
 This code base on https://pytorch.org/docs/stable/notes/extending.html
 """
-import math
 import torch
 import torch.nn as nn
+import torch_sparse
+import math
+
+class SparseLinear(nn.Module):
+    """Applies a linear transformation to the incoming data: :math:`y = xA^T + b`
+
+    Args:
+        in_features: size of each input sample
+        out_features: size of each output sample
+        bias: If set to ``False``, the layer will not learn an additive bias.
+            Default: ``True``
+        sparsity: sparsity of weight matrix
+            Default: 0.9
+        connectivity: user defined sparsity matrix
+            Default: None
+        small_world: boolean flag to generate small world sparsity
+            Default: ``False``
+        dynamic: boolean flag to dynamically change the network structure
+            Default: ``False``
+        deltaT (int): frequency for growing and pruning update step
+            Default: 6000
+        Tend (int): stopping time for growing and pruning algorithm update step
+            Default: 150000
+        alpha (float): f-decay parameter for cosine updates
+            Default: 0.1
+        max_size (int): maximum number of entries allowed before chunking occurrs
+            Default: 1e8
+
+    Shape:
+        - Input: :math:`(N, *, H_{in})` where :math:`*` means any number of
+          additional dimensions and :math:`H_{in} = \text{in\_features}`
+        - Output: :math:`(N, *, H_{out})` where all but the last dimension
+          are the same shape as the input and :math:`H_{out} = \text{out\_features}`.
+
+    Attributes:
+        weight: the learnable weights of the module of shape
+            :math:`(\text{out\_features}, \text{in\_features})`. The values are
+            initialized from :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})`, where
+            :math:`k = \frac{1}{\text{in\_features}}`
+        bias:   the learnable bias of the module of shape :math:`(\text{out\_features})`.
+                If :attr:`bias` is ``True``, the values are initialized from
+                :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})` where
+                :math:`k = \frac{1}{\text{in\_features}}`
+
+    Examples::
+
+        >>> m = nn.SparseLinear(20, 30)
+        >>> input = torch.randn(128, 20)
+        >>> output = m(input)
+        >>> print(output.size())
+        torch.Size([128, 30])
+    """
+
+    def __init__(self, in_features, out_features, indices, bias=True):
+        assert in_features < 2 ** 31 and out_features < 2 ** 31
+        assert isinstance(indices, torch.LongTensor) or isinstance(indices,torch.cuda.LongTensor), "Connectivity must be a Long Tensor"
+        assert indices.shape[0] == 2 and indices.shape[1] > 0, "Input shape for connectivity should be (2,nnz)"
+        assert indices.shape[1] <= in_features * out_features, "Nnz can't be bigger than the weight matrix"
+        super(SparseLinear, self).__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+
+        nnz = indices.shape[1]
+        self.sparsity = nnz / (out_features * in_features)
+
+        values = torch.empty(nnz)
+
+        indices, values = torch_sparse.coalesce(indices, values, out_features, in_features)
+
+        self.register_buffer('indices', indices)
+        self.weights = nn.Parameter(values)
+
+        if bias:
+            self.bias = nn.Parameter(torch.Tensor(out_features))
+        else:
+            self.register_parameter('bias', None)
+
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        stdv = 1. / math.sqrt(self.out_features)
+        nn.init.uniform_(self.weights, -stdv, stdv)
+        if self.bias is not None:
+            self.bias.data.uniform_(-stdv, stdv)
+
+    @property
+    def weight(self):
+        """ returns a torch.sparse.FloatTensor view of the underlying weight matrix
+            This is only for inspection purposes and should not be modified or used in any autograd operations
+        """
+        weight = torch.sparse.FloatTensor(self.indices, self.weights, (self.out_features, self.in_features))
+        return weight.coalesce().detach()
+
+    def forward(self, inputs):
+
+        output_shape = list(inputs.shape)
+        output_shape[-1] = self.out_features
+
+        if len(output_shape) == 1: inputs = inputs.view(1, -1)
+        inputs = inputs.flatten(end_dim=-2)
+
+        output = torch_sparse.spmm(self.indices, self.weights, self.out_features, self.in_features, inputs.t()).t()
+        if self.bias is not None:
+            output += self.bias
+
+        return output.view(output_shape)
+
+    def extra_repr(self):
+        return 'in_features={}, out_features={}, bias={}, sparsity={}, connectivity={}, small_world={}'.format(
+            self.in_features, self.out_features, self.bias is not None, self.sparsity, self.connectivity,
+            self.small_world
+        )
 
 
 class CustomizedLinearFunction(torch.autograd.Function):

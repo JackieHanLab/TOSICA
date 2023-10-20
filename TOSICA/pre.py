@@ -64,7 +64,7 @@ def prediect(adata,model_weight_path,project,mask_path,laten=False,save_att = 'X
     for name,parameters in model.named_parameters():
         #print(name,':',parameters.size())
         parm[name]=parameters.detach().cpu().numpy()
-    gene2token = parm['feature_embed.fe.weight']
+    gene2token = parm['feature_embed.fe.weights']
     gene2token = gene2token.reshape((int(gene2token.shape[0]/embed_dim),embed_dim,adata.shape[1]))
     gene2token = abs(gene2token)
     gene2token = np.max(gene2token,axis=1)

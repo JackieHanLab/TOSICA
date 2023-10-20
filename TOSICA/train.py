@@ -170,29 +170,28 @@ def train_one_epoch(model, optimizer, data_loader, device, epoch):
     """
     model.train()
     loss_function = torch.nn.CrossEntropyLoss() 
-    accu_loss = torch.zeros(1).to(device) 
-    accu_num = torch.zeros(1).to(device)
+    accu_loss = 0.
+    accu_num = 0.
     optimizer.zero_grad()
     sample_num = 0
-    data_loader = tqdm(data_loader)
-    for step, data in enumerate(data_loader):
-        exp, label = data
+    for step, (exp, label) in enumerate(tqdm(data_loader)):
+        exp, label = exp.to(device), label.to(device)
         sample_num += exp.shape[0]
-        _,pred,_ = model(exp.to(device))
+        _, pred = model(exp)
         pred_classes = torch.max(pred, dim=1)[1]
-        accu_num += torch.eq(pred_classes, label.to(device)).sum()
-        loss = loss_function(pred, label.to(device))
+        accu_num += torch.eq(pred_classes, label).sum().item()
+        loss = loss_function(pred, label)
         loss.backward()
-        accu_loss += loss.detach()
+        accu_loss += loss.item()
         data_loader.desc = "[train epoch {}] loss: {:.3f}, acc: {:.3f}".format(epoch,
-                                                                               accu_loss.item() / (step + 1),
-                                                                               accu_num.item() / sample_num)
+                                                                               accu_loss / (step + 1),
+                                                                               accu_num / sample_num)
         if not torch.isfinite(loss):
             print('WARNING: non-finite loss, ending training ', loss)
             sys.exit(1)
-        optimizer.step() 
+        optimizer.step()
         optimizer.zero_grad()
-    return accu_loss.item() / (step + 1), accu_num.item() / sample_num
+    return accu_loss / (step + 1), accu_num / sample_num
 
 @torch.no_grad()
 def evaluate(model, data_loader, device, epoch):
@@ -218,8 +217,7 @@ def evaluate(model, data_loader, device, epoch):
 def fit_model(adata, gmt_path, project = None, pre_weights='', label_name='Celltype',max_g=300,max_gs=300, mask_ratio = 0.015,n_unannotated = 1,batch_size=8, embed_dim=48,depth=2,num_heads=4,lr=0.001, epochs= 10, lrf=0.01):
     GLOBAL_SEED = 1
     set_seed(GLOBAL_SEED)
-    device = 'cuda:0'
-    device = torch.device(device if torch.cuda.is_available() else "cpu")
+    device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
     print(device)
     today = time.strftime('%Y%m%d',time.localtime(time.time()))
     #train_weights = os.getcwd()+"/weights%s"%today
@@ -268,7 +266,8 @@ def fit_model(adata, gmt_path, project = None, pre_weights='', label_name='Cellt
                                              batch_size=batch_size,
                                              shuffle=False,
                                              pin_memory=True,drop_last=True)
-    model = create_model(num_classes=num_classes, num_genes=len(exp_train[0]),  mask = mask,embed_dim=embed_dim,depth=depth,num_heads=num_heads,has_logits=False).to(device) 
+    model = create_model(num_classes=num_classes, num_genes=len(exp_train[0]), mask=mask, embed_dim=embed_dim,
+                         depth=depth, num_heads=num_heads, has_logits=False).to(device)
     if pre_weights != "":
         assert os.path.exists(pre_weights), "pre_weights file: '{}' not exist.".format(pre_weights)
         preweights_dict = torch.load(pre_weights, map_location=device)
