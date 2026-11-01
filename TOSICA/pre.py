@@ -80,19 +80,14 @@ def prediect(adata,model_weight_path,project,mask_path,laten=False,save_att = 'X
     l_p = np.c_[latent, predict_class,pre_class]
     att = np.c_[att, predict_class,pre_class]
     all_line = adata.shape[0]
-    n_line = 0
+    if all_line == 0 or n_step < 1 or batch_size < 1:
+        raise ValueError("Invalid cell count, n_step, or batch_size")
     adata_list = []
-    while (n_line) <= all_line:
-        if (all_line-n_line)%batch_size != 1:
-            expdata = pd.DataFrame(todense(adata[n_line:n_line+min(n_step,(all_line-n_line))]),index=np.array(adata[n_line:n_line+min(n_step,(all_line-n_line))].obs_names).tolist(), columns=np.array(adata.var_names).tolist())
-            print(n_line)
-            n_line = n_line+n_step
-        else:
-            expdata = pd.DataFrame(todense(adata[n_line:n_line+min(n_step,(all_line-n_line-2))]),index=np.array(adata[n_line:n_line+min(n_step,(all_line-n_line-2))].obs_names).tolist(), columns=np.array(adata.var_names).tolist())
-            n_line = (all_line-n_line-2)
-            print(n_line)
-        expdata = np.array(expdata)
-        expdata = torch.from_numpy(expdata.astype(np.float32))
+    for n_line in range(0, all_line, n_step):
+        print(n_line)
+        expdata = torch.from_numpy(
+            np.asarray(todense(adata[n_line:n_line + n_step]), dtype=np.float32)
+        )
         data_loader = torch.utils.data.DataLoader(expdata,
                                                  batch_size=batch_size,
                                                  shuffle=False,
@@ -103,7 +98,8 @@ def prediect(adata,model_weight_path,project,mask_path,laten=False,save_att = 'X
                 #print(step)
                 exp = data
                 lat, pre, weights = model(exp.to(device))
-                pre = torch.squeeze(pre).cpu()
+                #pre = torch.squeeze(pre).cpu()
+                pre = pre.cpu()
                 pre = F.softmax(pre,1)
                 predict_class = np.empty(shape=0)
                 pre_class = np.empty(shape=0) 
@@ -113,8 +109,10 @@ def prediect(adata,model_weight_path,project,mask_path,laten=False,save_att = 'X
                     else:
                         predict_class = np.r_[predict_class,n_c]
                     pre_class = np.r_[pre_class,torch.max(pre, dim=1)[0][i]]     
-                l_p = torch.squeeze(lat).cpu().numpy()
-                att = torch.squeeze(weights).cpu().numpy()
+                #l_p = torch.squeeze(lat).cpu().numpy()
+                #att = torch.squeeze(weights).cpu().numpy()
+                l_p = lat.cpu().numpy()
+                att = weights.cpu().numpy()
                 meta = np.c_[predict_class,pre_class]
                 meta = pd.DataFrame(meta)
                 meta.columns = ['Prediction','Probability']
