@@ -117,30 +117,23 @@ class Block(nn.Module):
 
 def get_weight(att_mat):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    att_mat = torch.stack(att_mat).squeeze(1)
-    #print(att_mat.size())
+    att_mat = torch.stack(att_mat)#.squeeze(1)
     # Average the attention weights across all heads.
     att_mat = torch.mean(att_mat, dim=2)
-    #print(att_mat.size())
     # To account for residual connections, we add an identity matrix to the
     # attention matrix and re-normalize the weights.
     residual_att = torch.eye(att_mat.size(3))
     aug_att_mat = att_mat.to(device) + residual_att.to(device)
     aug_att_mat = aug_att_mat / aug_att_mat.sum(dim=-1).unsqueeze(-1)
-    #print(aug_att_mat.size())
     # Recursively multiply the weight matrices
     joint_attentions = torch.zeros(aug_att_mat.size()).to(device)
     joint_attentions[0] = aug_att_mat[0]
     
     for n in range(1, aug_att_mat.size(0)):
         joint_attentions[n] = torch.matmul(aug_att_mat[n], joint_attentions[n-1])
-
-    #print(joint_attentions.size())
     # Attention from the output token to the input space.
     v = joint_attentions[-1]
-    #print(v.size())
     v = v[:,0,1:]
-    #print(v.size())
     return v
 
 class Transformer(nn.Module):
